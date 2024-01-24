@@ -61,16 +61,28 @@ export class KnexRepository
   }
 
   async findByIdAndVersion(id: string | number, version: number) {
-    return await this.knex
+    const findedRecord = await this.knex
       .select('*')
       .where('id', id)
       .where('version', version)
-      .table(`${this.table}_history`)
+      .table(this.table)
       .first();
+
+    if (!findedRecord) {
+      console.log('outra tentativa');
+      return await this.knex
+        .select('*')
+        .where('id', id)
+        .where('version', version)
+        .table(`${this.table}_history`)
+        .first();
+    }
+
+    return findedRecord;
   }
 
   async delete(id: string | number) {
-    const timestamp = new Date().toISOString(); // Pode ajustar conforme necessário
+    const timestamp = new Date().toISOString();
     const deletedRecord = await this.knex.transaction(async (trx) => {
       await trx
         .table(this.table)
