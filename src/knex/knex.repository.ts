@@ -23,6 +23,15 @@ export class KnexRepository
     super.applyTableNames(tableName, tableNameHistory);
   }
 
+  async createWithAudit(data: any) {
+    const [createdRecord] = await this.knex
+      .insert(data)
+      .into(this.table)
+      .returning('*');
+    this.eventEmitter.emit('audit', createdRecord);
+    return createdRecord;
+  }
+
   async create(data: any) {
     const [createdRecord] = await this.knex
       .insert(data)
@@ -41,14 +50,12 @@ export class KnexRepository
   }
 
   async updateWithAudit(id: string | number, data: any) {
-    const oldRecord = await this.findById(id);
-    this.eventEmitter.emit('startAudit', oldRecord);
     const [updatedRecord] = await this.knex
       .update(data)
       .where('id', id)
       .into(this.table)
       .returning('*');
-    this.eventEmitter.emit('finishAudit');
+    this.eventEmitter.emit('audit', updatedRecord);
     return updatedRecord;
   }
 
@@ -70,23 +77,40 @@ export class KnexRepository
   }
 
   async delete(id: string | number) {
-    const [deletedRecord] = await this.knex
-      .delete()
-      .where('id', id)
-      .table(this.table)
-      .returning('*');
-    return deletedRecord;
+    const timestamp = new Date().toISOString();
+    return this.knex.transaction(async (trx) => {
+      await trx
+        .table(this.table)
+        .update({ deleted_at: timestamp })
+        .where('id', id);
+
+      const [deletedRecord] = await trx
+        .table(this.table)
+        .delete()
+        .where('id', id)
+        .returning('*');
+
+      return deletedRecord;
+    });
   }
 
   async deleteWithAudit(id: string | number) {
-    const oldRecord = await this.findById(id);
-    this.eventEmitter.emit('startAudit', oldRecord);
-    const [deletedRecord] = await this.knex
-      .delete()
-      .where('id', id)
-      .table(this.table)
-      .returning('*');
-    this.eventEmitter.emit('finishAudit');
+    const timestamp = new Date().toISOString();
+    const deletedRecord = await this.knex.transaction(async (trx) => {
+      await trx
+        .table(this.table)
+        .update({ deleted_at: timestamp })
+        .where('id', id);
+
+      const [deletedRecord] = await trx
+        .table(this.table)
+        .delete()
+        .where('id', id)
+        .returning('*');
+
+      return deletedRecord;
+    });
+    this.eventEmitter.emit('audit', deletedRecord);
     return deletedRecord;
   }
 

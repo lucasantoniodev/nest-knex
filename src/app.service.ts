@@ -14,7 +14,7 @@ export class AppService {
   }
 
   async create(data: any) {
-    return this.knexService.create(data);
+    return this.knexService.createWithAudit(data);
   }
 
   async update(id: string, data: any) {
