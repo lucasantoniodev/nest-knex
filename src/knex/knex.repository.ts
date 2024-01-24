@@ -42,7 +42,7 @@ export class KnexRepository
   }
 
   async updateWithAudit(id: string | number, data: any) {
-    this.eventEmitter.emit('startAudit', id, this.table);
+    this.eventEmitter.emit('startAudit', id);
     const [updatedRecord] = await this.knex
       .update(data)
       .where('id', id)
@@ -61,12 +61,6 @@ export class KnexRepository
   }
 
   async findByIdAndVersion(id: string | number, version: number) {
-    // Uma possibilidade para não precisar auditar entidades que foram criadas recentemente
-    // Caso precise, podemos passar um boolean para o finishAudit informando que é create
-    if (Number(version) === 0) {
-      return this.findById(id);
-    }
-
     return await this.knex
       .select('*')
       .where('id', id)
@@ -85,7 +79,7 @@ export class KnexRepository
   }
 
   async deleteWithAudit(id: string | number) {
-    this.eventEmitter.emit('startAudit', id, this.table);
+    this.eventEmitter.emit('startAudit', id);
     const [deletedRecord] = await this.knex
       .delete()
       .where('id', id)
