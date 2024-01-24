@@ -70,11 +70,22 @@ export class KnexRepository
   }
 
   async delete(id: string | number) {
-    const [deletedRecord] = await this.knex
-      .delete()
-      .where('id', id)
-      .table(this.table)
-      .returning('*');
+    const timestamp = new Date().toISOString(); // Pode ajustar conforme necessário
+    const deletedRecord = await this.knex.transaction(async (trx) => {
+      await trx
+        .table(this.table)
+        .update({ deleted_at: timestamp })
+        .where('id', id);
+
+      const [deletedRecord] = await trx
+        .table(this.table)
+        .delete()
+        .where('id', id)
+        .returning('*');
+
+      return deletedRecord;
+    });
+
     return deletedRecord;
   }
 
