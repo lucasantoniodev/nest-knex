@@ -23,6 +23,10 @@ export class KnexRepository
     super.applyTableNames(tableName, tableNameHistory);
   }
 
+  async getClientInstance() {
+    return this.client;
+  }
+
   async createWithAudit(data: any) {
     const [createdRecord] = await this.knex
       .insert(data)

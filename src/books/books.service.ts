@@ -9,31 +9,31 @@ interface BookModel {
 
 @Injectable()
 export class BooksService {
-  constructor(private readonly knexService: KnexRepository) {
-    this.knexService.setTableName('books', 'books_history');
+  constructor(private readonly knexRepository: KnexRepository) {
+    this.knexRepository.setTableName('books', 'books_histora');
   }
 
   async create(data: any) {
-    return this.knexService.createWithAudit(data);
+    return this.knexRepository.createWithAudit(data);
   }
 
   async update(id: string, data: any) {
-    return this.knexService.updateWithAudit(id, data);
+    return this.knexRepository.updateWithAudit(id, data);
   }
 
   async findAll() {
-    return this.knexService.findAll();
+    return this.knexRepository.findAll();
   }
 
   async findById(id: string) {
-    return this.knexService.findById(id);
+    return this.knexRepository.findById(id);
   }
 
   async findByIdAndVersion(id: string, version: number) {
-    return this.knexService.findByIdAndVersion(id, version);
+    return this.knexRepository.findByIdAndVersion(id, version);
   }
 
   async delete(id: string) {
-    return this.knexService.deleteWithAudit(id);
+    return this.knexRepository.deleteWithAudit(id);
   }
 }

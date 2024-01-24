@@ -27,7 +27,7 @@ export class KnexAuditListenRepository {
     const hasTable = await this.client.schema.hasTable(this.tableNameHistory);
 
     if (!hasTable) {
-      throw new Error('Table does not exist');
+      throw new Error('Tabela de histórico não encontrada...');
     }
   }
 }
