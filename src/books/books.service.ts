@@ -10,7 +10,7 @@ interface BookModel {
 @Injectable()
 export class BooksService {
   constructor(private readonly knexRepository: KnexRepository) {
-    this.knexRepository.setTableName('books', 'books_histora');
+    this.knexRepository.setTableName('books', 'books_history');
   }
 
   async create(data: any) {
