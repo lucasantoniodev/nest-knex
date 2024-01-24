@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import { KnexModule } from 'nestjs-knex';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { KnexRepository } from './knex/knex.repository';
+import { BooksModule } from './books/books.module';
 
 @Module({
   imports: [
-    EventEmitterModule.forRoot(),
+    BooksModule,
     KnexModule.forRootAsync({
       useFactory: () => ({
         config: {
@@ -29,7 +27,7 @@ import { KnexRepository } from './knex/knex.repository';
       }),
     }),
   ],
-  controllers: [AppController],
-  providers: [AppService, KnexRepository],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

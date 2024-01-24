@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { KnexRepository } from './knex/knex.repository';
+import { KnexRepository } from 'src/knex/knex.repository';
 
 interface BookModel {
   id?: string;
@@ -8,7 +8,7 @@ interface BookModel {
 }
 
 @Injectable()
-export class AppService {
+export class BooksService {
   constructor(private readonly knexService: KnexRepository) {
     this.knexService.setTableName('books', 'books_history');
   }

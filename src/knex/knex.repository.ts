@@ -116,6 +116,7 @@ export class KnexRepository
   onModuleDestroy() {
     if (this.client) {
       this.client.destroy();
+      this.setTableName(null, null);
     }
   }
 }
