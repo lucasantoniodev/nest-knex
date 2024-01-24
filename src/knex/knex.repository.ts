@@ -1,16 +1,19 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Knex } from 'knex';
 import { InjectKnex } from 'nestjs-knex';
+import { config } from 'process';
 
 interface ConfigProps {
-  tableName: string;
-  data: any;
+  tableName?: string;
+  data?: any;
 }
 
 interface DataConfig {
-  oldName: string;
-  newName: string;
+  oldName?: string;
+  newName?: string;
 }
+
+//Extrair os métodos auditáveis para outra classe
 
 @Injectable()
 export class KnexRepository<T> implements OnModuleDestroy {
@@ -35,6 +38,14 @@ export class KnexRepository<T> implements OnModuleDestroy {
     return this.knex;
   }
 
+  async create(data: T) {
+    const [createdRecord] = await this.knex
+      .insert(data)
+      .into(this.tableName)
+      .returning('*');
+    return createdRecord;
+  }
+
   async createWithAudit(data: T) {
     return await this.knex.transaction(async (trx) => {
       const [createdRecord] = await trx
@@ -52,7 +63,7 @@ export class KnexRepository<T> implements OnModuleDestroy {
     firstData: ConfigProps,
     secondData: ConfigProps,
     config: {
-      nameToRelation: string;
+      nameToRelationSecondRecord: string;
       renameProps: boolean;
       firstDataConfig: DataConfig;
       secondDataConfig: DataConfig;
@@ -64,7 +75,8 @@ export class KnexRepository<T> implements OnModuleDestroy {
         .insert(firstData.data)
         .returning('*');
 
-      secondData.data[config.nameToRelation] = createdFirstRecord.id;
+      secondData.data[config.nameToRelationSecondRecord] =
+        createdFirstRecord.id;
       const [createdSecondRecord] = await trx
         .table(secondData.tableName)
         .insert(secondData.data)
@@ -80,23 +92,15 @@ export class KnexRepository<T> implements OnModuleDestroy {
         delete createdSecondRecord[config.secondDataConfig.oldName];
       }
 
-      const innerRecords = {
+      const innerUpdatedRecords = {
         ...createdFirstRecord,
         ...createdSecondRecord,
       };
 
-      await trx.table(this.tableNameHistory).insert(innerRecords);
+      await trx.table(this.tableNameHistory).insert(innerUpdatedRecords);
 
-      return innerRecords;
+      return innerUpdatedRecords;
     });
-  }
-
-  async create(data: T) {
-    const [createdRecord] = await this.knex
-      .insert(data)
-      .into(this.tableName)
-      .returning('*');
-    return createdRecord;
   }
 
   async update(id: string | number, data: T) {
@@ -119,6 +123,51 @@ export class KnexRepository<T> implements OnModuleDestroy {
       await trx.table(this.tableNameHistory).insert(updatedRecord);
 
       return updatedRecord;
+    });
+  }
+
+  async updateTwoRelationWithOnceAudit(
+    firstData: ConfigProps,
+    secondData: ConfigProps,
+    config: {
+      referenceNameRelationId: string;
+      renameProps: boolean;
+      firstDataConfig: DataConfig;
+      secondDataConfig: DataConfig;
+    },
+  ) {
+    return await this.knex.transaction(async (trx) => {
+      const [updatedFirstRecord] = await trx
+        .table(firstData.tableName)
+        .update(firstData.data)
+        .where('id', firstData.data.id)
+        .returning('*');
+
+      console.log(secondData.data);
+      const [updatedSecondRecord] = await trx
+        .table(secondData.tableName)
+        .update(secondData.data)
+        .where(config.referenceNameRelationId, firstData.data.id)
+        .returning('*');
+
+      if (config.renameProps) {
+        updatedFirstRecord[config.firstDataConfig.newName] =
+          updatedFirstRecord[config.firstDataConfig.oldName];
+        delete updatedFirstRecord[config.firstDataConfig.oldName];
+
+        updatedSecondRecord[config.secondDataConfig.newName] =
+          updatedSecondRecord[config.secondDataConfig.oldName];
+        delete updatedSecondRecord[config.secondDataConfig.oldName];
+      }
+
+      const innerUpdatedRecords = {
+        ...updatedFirstRecord,
+        ...updatedSecondRecord,
+      };
+
+      await trx.table(this.tableNameHistory).insert(innerUpdatedRecords);
+
+      return innerUpdatedRecords;
     });
   }
 

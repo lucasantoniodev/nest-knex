@@ -7,6 +7,7 @@ export async function up(knex: Knex): Promise<void> {
       .uuid('collection_item_id')
       .references('id')
       .inTable('collection_item')
+      .unique()
       .notNullable();
     table.integer('min_length');
     table.integer('max_length').notNullable();
