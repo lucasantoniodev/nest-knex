@@ -7,15 +7,21 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { BooksService } from './books.service';
+import { CollectionItemService } from './collection-item.service';
+import { CollectionTextItem } from './collection-item.model';
 
-@Controller('books')
-export class BooksController {
-  constructor(private readonly booksService: BooksService) {}
+@Controller('collection-item')
+export class CollectionItemController {
+  constructor(private readonly booksService: CollectionItemService) {}
 
   @Post()
   create(@Body() data: any) {
     return this.booksService.create(data);
+  }
+
+  @Post('/v2')
+  createWithTwoEntites(@Body() data: CollectionTextItem) {
+    return this.booksService.createTwoEntityWithOnceAudit(data);
   }
 
   @Get()

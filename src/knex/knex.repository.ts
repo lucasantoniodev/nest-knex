@@ -2,6 +2,16 @@ import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Knex } from 'knex';
 import { InjectKnex } from 'nestjs-knex';
 
+interface ConfigProps {
+  tableName: string;
+  data: any;
+}
+
+interface DataConfig {
+  oldName: string;
+  newName: string;
+}
+
 @Injectable()
 export class KnexRepository<T> implements OnModuleDestroy {
   private tableName: string = '';
@@ -35,6 +45,49 @@ export class KnexRepository<T> implements OnModuleDestroy {
       await trx.table(this.tableNameHistory).insert(createdRecord);
 
       return createdRecord;
+    });
+  }
+
+  async createTwoRelationWithOnceAudit(
+    firstData: ConfigProps,
+    secondData: ConfigProps,
+    config: {
+      nameToRelation: string;
+      renameProps: boolean;
+      firstDataConfig: DataConfig;
+      secondDataConfig: DataConfig;
+    },
+  ) {
+    return await this.knex.transaction(async (trx) => {
+      const [createdFirstRecord] = await trx
+        .table(firstData.tableName)
+        .insert(firstData.data)
+        .returning('*');
+
+      secondData.data[config.nameToRelation] = createdFirstRecord.id;
+      const [createdSecondRecord] = await trx
+        .table(secondData.tableName)
+        .insert(secondData.data)
+        .returning('*');
+
+      if (config.renameProps) {
+        createdFirstRecord[config.firstDataConfig.newName] =
+          createdFirstRecord[config.firstDataConfig.oldName];
+        delete createdFirstRecord[config.firstDataConfig.oldName];
+
+        createdSecondRecord[config.secondDataConfig.newName] =
+          createdSecondRecord[config.secondDataConfig.oldName];
+        delete createdSecondRecord[config.secondDataConfig.oldName];
+      }
+
+      const innerRecords = {
+        ...createdFirstRecord,
+        ...createdSecondRecord,
+      };
+
+      await trx.table(this.tableNameHistory).insert(innerRecords);
+
+      return innerRecords;
     });
   }
 

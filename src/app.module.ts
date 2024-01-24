@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { KnexModule } from 'nestjs-knex';
 import { KnexRepository } from './knex/knex.repository';
-import { BooksModule } from './books/books.module';
+import { CollectionItemModule } from './collection-item/collection-item.module';
 
 @Module({
-  imports: [BooksModule],
+  imports: [CollectionItemModule],
   controllers: [],
   providers: [],
 })
