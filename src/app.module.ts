@@ -3,7 +3,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { KnexModule } from 'nestjs-knex';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { KnexService } from './knex/knex.service';
+import { KnexRepository } from './knex/knex.repository';
 
 @Module({
   imports: [
@@ -30,6 +30,6 @@ import { KnexService } from './knex/knex.service';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, KnexService],
+  providers: [AppService, KnexRepository],
 })
 export class AppModule {}

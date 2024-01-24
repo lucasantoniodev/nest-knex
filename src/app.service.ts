@@ -1,7 +1,5 @@
-import { Injectable, UseInterceptors } from '@nestjs/common';
-import { LoggingInterceptor } from './loggin.interceptor';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { KnexService } from './knex/knex.service';
+import { Injectable } from '@nestjs/common';
+import { KnexRepository } from './knex/knex.repository';
 
 interface BookModel {
   id?: string;
@@ -11,21 +9,31 @@ interface BookModel {
 
 @Injectable()
 export class AppService {
-  constructor(private readonly knexService: KnexService) {
+  constructor(private readonly knexService: KnexRepository) {
     this.knexService.setTableName('books');
   }
 
-  async create() {
-    return this.knexService.create({
-      title: 'Título',
-      description: 'Description',
-    });
+  async create(data: any) {
+    return this.knexService.create(data);
   }
 
-  async update(id: string) {
-    return this.knexService.updateWithAudit(id, {
-      title: 'Título atualizado',
-      description: 'Descrição atualizada',
-    });
+  async update(id: string, data: any) {
+    return this.knexService.updateWithAudit(id, data);
+  }
+
+  async findAll() {
+    return this.knexService.findAll();
+  }
+
+  async findById(id: string) {
+    return this.knexService.findById(id);
+  }
+
+  async findByIdAndVersion(id: string, version: number) {
+    return this.knexService.findByIdAndVersion(id, version);
+  }
+
+  async delete(id: string) {
+    return this.knexService.deleteWithAudit(id);
   }
 }
