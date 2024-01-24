@@ -5,18 +5,22 @@ import knex, { Knex } from 'knex';
 @Injectable()
 export class KnexAuditListenRepository {
   public client: Knex;
-  private tableName: string;
-  private tableNameHistory: string;
+  private tableName: string = '';
+  private tableNameHistory: string = `${this.tableName}_history`;
   private entity: any;
 
   constructor(knex: Knex) {
     this.client = knex;
   }
 
+  public applyTableNames(tableName: string, tableNameHistory?: string) {
+    this.tableName = tableName;
+    if (tableNameHistory) this.tableNameHistory = tableNameHistory;
+  }
+
   @OnEvent('startAudit')
-  async handleOnStartAudit(id: string | number, tableName: string) {
+  async handleOnStartAudit(id: string | number) {
     console.log('Iniciando serviço de auditoria para item com id: ' + id);
-    this.applyTableNames(tableName);
     await this.validateIfHasTable();
     this.entity = await this.client
       .select('*')
@@ -36,16 +40,11 @@ export class KnexAuditListenRepository {
       await this.client.insert(this.entity).into(this.tableNameHistory);
     }
 
-    this.tableName = null;
-    this.entity = null;
     console.log(
       'Auditoria finalizada com sucesso para o item com id: ' + this.entity?.id,
     );
-  }
 
-  private applyTableNames(tableName: string) {
-    this.tableName = tableName;
-    this.tableNameHistory = `${tableName}_history`;
+    this.entity = null;
   }
 
   private async validateIfHasTable() {

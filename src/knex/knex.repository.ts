@@ -4,7 +4,6 @@ import { Knex } from 'knex';
 import { InjectKnex } from 'nestjs-knex';
 import { KnexAuditListenRepository } from './knexAuditListen.repository';
 
-// Possibilidade de renomear para repository
 
 @Injectable()
 export class KnexRepository
@@ -20,8 +19,9 @@ export class KnexRepository
     super(knex);
   }
 
-  public setTableName(tableName: string) {
+  public setTableName(tableName: string, tableNameHistory?: string) {
     this.table = tableName;
+    super.applyTableNames(tableName, tableNameHistory);
   }
 
   async create(data: any) {

@@ -28,8 +28,6 @@ export class AppController {
     return this.appService.findById(id);
   }
 
-  // Podemos validar se a versão é 0 para direcionar para o findById
-  // Ou auditar a entidade quando ela for criada...
   @Get('/:id/:version')
   findByIdAndVersion(
     @Param('id') id: string,
