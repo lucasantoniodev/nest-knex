@@ -4,7 +4,6 @@ import { Knex } from 'knex';
 import { InjectKnex } from 'nestjs-knex';
 import { KnexAuditListenRepository } from './knexAuditListen.repository';
 
-
 @Injectable()
 export class KnexRepository
   extends KnexAuditListenRepository
@@ -42,7 +41,8 @@ export class KnexRepository
   }
 
   async updateWithAudit(id: string | number, data: any) {
-    this.eventEmitter.emit('startAudit', id);
+    const oldRecord = await this.findById(id);
+    this.eventEmitter.emit('startAudit', oldRecord);
     const [updatedRecord] = await this.knex
       .update(data)
       .where('id', id)
@@ -79,7 +79,8 @@ export class KnexRepository
   }
 
   async deleteWithAudit(id: string | number) {
-    this.eventEmitter.emit('startAudit', id);
+    const oldRecord = await this.findById(id);
+    this.eventEmitter.emit('startAudit', oldRecord);
     const [deletedRecord] = await this.knex
       .delete()
       .where('id', id)

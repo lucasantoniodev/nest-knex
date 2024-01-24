@@ -19,14 +19,10 @@ export class KnexAuditListenRepository {
   }
 
   @OnEvent('startAudit')
-  async handleOnStartAudit(id: string | number) {
-    console.log('Iniciando serviço de auditoria para item com id: ' + id);
+  async handleOnStartAudit(data: any) {
+    console.log('Iniciando serviço de auditoria para item com id: ' + data?.id);
     await this.validateIfHasTable();
-    this.entity = await this.client
-      .select('*')
-      .from(this.tableName)
-      .where('id', id)
-      .first();
+    this.entity = data;
 
     if (!this.entity) {
       throw new Error('Entity does not exists');
