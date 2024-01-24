@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import { KnexModule } from 'nestjs-knex';
 
 @Module({
   imports: [
-    EventEmitterModule.forRoot(),
     KnexModule.forRootAsync({
       useFactory: () => ({
         config: {

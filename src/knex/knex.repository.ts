@@ -1,10 +1,9 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Knex } from 'knex';
 import { InjectKnex } from 'nestjs-knex';
 
 @Injectable()
-export class KnexRepository implements OnModuleDestroy {
+export class KnexRepository<T> implements OnModuleDestroy {
   private tableName: string = '';
   private tableNameHistory: string = `${this.tableName}_history`;
 
@@ -26,7 +25,7 @@ export class KnexRepository implements OnModuleDestroy {
     return this.knex;
   }
 
-  async createWithAudit(data: any) {
+  async createWithAudit(data: T) {
     return await this.knex.transaction(async (trx) => {
       const [createdRecord] = await trx
         .table(this.tableName)
@@ -39,7 +38,7 @@ export class KnexRepository implements OnModuleDestroy {
     });
   }
 
-  async create(data: any) {
+  async create(data: T) {
     const [createdRecord] = await this.knex
       .insert(data)
       .into(this.tableName)
@@ -47,7 +46,7 @@ export class KnexRepository implements OnModuleDestroy {
     return createdRecord;
   }
 
-  async update(id: string | number, data: any) {
+  async update(id: string | number, data: T) {
     const [updatedRecord] = await this.knex
       .update(data)
       .where('id', id)
@@ -56,7 +55,7 @@ export class KnexRepository implements OnModuleDestroy {
     return updatedRecord;
   }
 
-  async updateWithAudit(id: string | number, data: any) {
+  async updateWithAudit(id: string | number, data: T) {
     return await this.knex.transaction(async (trx) => {
       const [updatedRecord] = await trx
         .table(this.tableName)
