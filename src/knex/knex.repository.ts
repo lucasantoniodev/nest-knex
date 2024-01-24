@@ -18,6 +18,13 @@ export class KnexRepository
     super(knex);
   }
 
+  onModuleDestroy() {
+    if (this.client) {
+      this.client.destroy();
+      this.setTableName(null, null);
+    }
+  }
+
   public setTableName(tableName: string, tableNameHistory?: string) {
     this.table = tableName;
     super.applyTableNames(tableName, tableNameHistory);
@@ -103,6 +110,7 @@ export class KnexRepository
 
   async deleteWithAudit(id: string | number) {
     const oldRecord = await this.findById(id);
+    oldRecord.deleted_at = new Date().toISOString();
     this.eventEmitter.emit('startAudit', oldRecord);
     const [deletedRecord] = await this.knex
       .delete()
@@ -111,12 +119,5 @@ export class KnexRepository
       .returning('*');
     this.eventEmitter.emit('finishAudit');
     return deletedRecord;
-  }
-
-  onModuleDestroy() {
-    if (this.client) {
-      this.client.destroy();
-      this.setTableName(null, null);
-    }
   }
 }

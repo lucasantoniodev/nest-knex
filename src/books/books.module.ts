@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { EventEmitterModule } from '@nestjs/event-emitter';
+import { KnexAppModule } from 'src/knex/knex.module';
+import { KnexRepository } from 'src/knex/knex.repository';
 import { BooksController } from './books.controller';
 import { BooksService } from './books.service';
-import { KnexRepository } from 'src/knex/knex.repository';
 
 @Module({
-  imports: [EventEmitterModule.forRoot()],
+  imports: [KnexAppModule],
   controllers: [BooksController],
   providers: [BooksService, KnexRepository],
 })
