@@ -7,25 +7,25 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { AppService } from './app.service';
+import { BooksService } from './books.service';
 
 @Controller('books')
-export class AppController {
-  constructor(private readonly appService: AppService) {}
+export class BooksController {
+  constructor(private readonly booksService: BooksService) {}
 
   @Post()
   create(@Body() data: any) {
-    return this.appService.create(data);
+    return this.booksService.create(data);
   }
 
   @Get()
   findAll() {
-    return this.appService.findAll();
+    return this.booksService.findAll();
   }
 
   @Get('/:id')
   findById(@Param('id') id: string) {
-    return this.appService.findById(id);
+    return this.booksService.findById(id);
   }
 
   @Get('/:id/:version')
@@ -33,16 +33,16 @@ export class AppController {
     @Param('id') id: string,
     @Param('version') version: number,
   ) {
-    return this.appService.findByIdAndVersion(id, version);
+    return this.booksService.findByIdAndVersion(id, version);
   }
 
   @Put('/:id')
   update(@Param('id') id: string, @Body() data: any) {
-    return this.appService.update(id, data);
+    return this.booksService.update(id, data);
   }
 
   @Delete('/:id')
   deleteWithAudit(@Param('id') id: string) {
-    return this.appService.delete(id);
+    return this.booksService.delete(id);
   }
 }
