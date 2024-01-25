@@ -3,34 +3,33 @@ import {
   ConfigProps,
   DataConfig,
   IFindByIdAndVersionProps,
+  IActionForTwoTablesProps,
 } from './knex.interface';
 import { KnexRepository } from './knex.repository';
+import { Knex } from 'knex';
 
 @Injectable()
 export class KnexAuditRepository<T> extends KnexRepository<T> {
-  async createWithAudit(data: T) {
-    return await this.client.transaction(async (trx) => {
-      const [createdRecord] = await trx
-        .table(this.tableName)
-        .insert(data)
-        .returning('*');
+  async findByIdAndVersion(props: IFindByIdAndVersionProps) {
+    return await this.client
+      .select('*')
+      .where(props?.columnName ?? 'id', props.id)
+      .where('version', props.version)
+      .table(this.tableNameHistory)
+      .first();
+  }
 
-      await trx.table(this.tableNameHistory).insert(createdRecord);
-
+  async createOneAudit(data: T) {
+    return await this.transaction(async (trx) => {
+      const createdRecord = this.validateEntity(
+        await this.insertAndReturn(trx, data),
+      );
+      await this.insertHistory(trx, createdRecord);
       return createdRecord;
     });
   }
 
-  async findByIdAndVersion(props: IFindByIdAndVersionProps) {
-    return await this.client
-      .select('*')
-      .where(props.columnName, props.id)
-      .where('version', props.version)
-      .table(`${this.tableName}_history`)
-      .first();
-  }
-
-  async createTwoRelationWithOnceAudit(
+  async createTwoInOneAudit(
     firstData: ConfigProps,
     secondData: ConfigProps,
     config: {
@@ -40,26 +39,19 @@ export class KnexAuditRepository<T> extends KnexRepository<T> {
       secondDataConfig: DataConfig;
     },
   ) {
-    return await this.client.transaction(async (trx) => {
-      const [createdFirstRecord] = await trx
-        .table(firstData.tableName)
-        .insert(firstData.data)
-        .returning('*');
+    return await this.transaction(async (trx) => {
+      const createdFirstRecord = this.validateEntity(
+        await this.insertAndReturn(trx, firstData.data, firstData.tableName),
+      );
 
       secondData.data[config.referenceNameRelationId] = createdFirstRecord.id;
-      const [createdSecondRecord] = await trx
-        .table(secondData.tableName)
-        .insert(secondData.data)
-        .returning('*');
+      const createdSecondRecord = this.validateEntity(
+        await this.insertAndReturn(trx, secondData.data, secondData.tableName),
+      );
 
       if (config.renameProps) {
-        createdFirstRecord[config.firstDataConfig.newName] =
-          createdFirstRecord[config.firstDataConfig.oldName];
-        delete createdFirstRecord[config.firstDataConfig.oldName];
-
-        createdSecondRecord[config.secondDataConfig.newName] =
-          createdSecondRecord[config.secondDataConfig.oldName];
-        delete createdSecondRecord[config.secondDataConfig.oldName];
+        this.renameProperties(createdFirstRecord, config.firstDataConfig);
+        this.renameProperties(createdSecondRecord, config.secondDataConfig);
       }
 
       const innerCreatedRecords = {
@@ -67,65 +59,53 @@ export class KnexAuditRepository<T> extends KnexRepository<T> {
         ...createdSecondRecord,
       };
 
-      await trx.table(this.tableNameHistory).insert(innerCreatedRecords);
+      await this.insertHistory(trx, innerCreatedRecords);
 
       return innerCreatedRecords;
     });
   }
 
-  async updateWithAudit(id: string | number, data: T) {
-    return await this.client.transaction(async (trx) => {
-      const [updatedRecord] = await trx
-        .table(this.tableName)
-        .update(data)
-        .where('id', id)
-        .returning('*');
-
+  async updateOneAudit(id: string | number, data: T) {
+    return await this.transaction(async (trx) => {
+      const [updatedRecord] = this.validateEntity(
+        await trx
+          .table(this.tableName)
+          .update(data)
+          .where('id', id)
+          .returning('*'),
+      );
       await trx.table(this.tableNameHistory).insert(updatedRecord);
-
       return updatedRecord;
     });
   }
 
-  async updateTwoRelationWithOnceAudit(
-    firstData: ConfigProps,
-    secondData: ConfigProps,
-    config: {
-      referenceNameRelationId: string;
-      renameProps: boolean;
-      firstDataConfig: DataConfig;
-      secondDataConfig: DataConfig;
-    },
-  ) {
+  async updateTwoInOneAudit(props: IActionForTwoTablesProps) {
     return await this.client.transaction(async (trx) => {
-      const [updatedFirstRecord] = await trx
-        .table(firstData.tableName)
-        .update(firstData.data)
-        .where('id', firstData.data.id)
-        .returning('*');
+      const updatedFirstRecord = this.validateEntity(
+        await this.updateAndReturn({
+          trx,
+          id: props.firstData.data.id,
+          data: props.firstData.data,
+          tableName: props.firstData.tableName,
+        }),
+      );
 
-      if (!updatedFirstRecord) {
-        throw new Error(`There are some error for first entity`);
-      }
+      const updatedSecondRecord = this.validateEntity(
+        await this.updateAndReturn({
+          trx,
+          id: props.firstData.data.id,
+          data: props.secondData.data,
+          tableName: props.secondData.tableName,
+          columnName: props.referenceNameRelationId,
+        }),
+      );
 
-      const [updatedSecondRecord] = await trx
-        .table(secondData.tableName)
-        .update(secondData.data)
-        .where(config.referenceNameRelationId, firstData.data.id)
-        .returning('*');
-
-      if (!updatedSecondRecord) {
-        throw new Error(`There are some error for second entity`);
-      }
-
-      if (config.renameProps) {
-        updatedFirstRecord[config.firstDataConfig.newName] =
-          updatedFirstRecord[config.firstDataConfig.oldName];
-        delete updatedFirstRecord[config.firstDataConfig.oldName];
-
-        updatedSecondRecord[config.secondDataConfig.newName] =
-          updatedSecondRecord[config.secondDataConfig.oldName];
-        delete updatedSecondRecord[config.secondDataConfig.oldName];
+      if (props.config.renameProps) {
+        this.renameProperties(updatedFirstRecord, props.config.firstDataConfig);
+        this.renameProperties(
+          updatedSecondRecord,
+          props.config.secondDataConfig,
+        );
       }
 
       const innerUpdatedRecords = {
@@ -133,72 +113,54 @@ export class KnexAuditRepository<T> extends KnexRepository<T> {
         ...updatedSecondRecord,
       };
 
-      await trx.table(this.tableNameHistory).insert(innerUpdatedRecords);
+      await this.insertHistory(trx, innerUpdatedRecords);
 
       return innerUpdatedRecords;
     });
   }
 
-  async deleteWithAudit(id: string | number) {
-    const timestamp = new Date().toISOString();
-    const deletedRecord = await this.client.transaction(async (trx) => {
-      await trx
-        .table(this.tableName)
-        .update({ deleted_at: timestamp })
-        .where('id', id);
-
-      const [deletedRecord] = await trx
-        .table(this.tableName)
-        .delete()
-        .where('id', id)
-        .returning('*');
-
-      await trx.table(this.tableNameHistory).insert(deletedRecord);
-
+  async deleteOneAudit(id: string | number) {
+    return await this.transaction(async (trx) => {
+      await this.updateSoftDelete({ trx, id });
+      const deletedRecord = this.validateEntity(
+        await this.deleteAndReturn({ trx, id }),
+      );
+      await this.insertHistory(trx, deletedRecord);
       return deletedRecord;
     });
-
-    return deletedRecord;
   }
 
-  async deleteTwoRelationWithOnceAuditByRelationId(
-    firstData: ConfigProps,
-    secondData: ConfigProps,
-    config: {
-      referenceNameRelationId: string;
-      renameProps: boolean;
-      firstDataConfig: DataConfig;
-      secondDataConfig: DataConfig;
-    },
-  ) {
-    const timestamp = new Date().toISOString();
-    return await this.client.transaction(async (trx) => {
-      const [deletedSecondRecord] = await trx
-        .table(secondData.tableName)
-        .delete()
-        .where(config.referenceNameRelationId, firstData.data.id)
-        .returning('*');
+  async deleteForTwoInOneAudit(props: IActionForTwoTablesProps) {
+    return await this.transaction(async (trx) => {
+      const deletedSecondRecord = this.validateEntity(
+        await this.deleteAndReturn({
+          trx,
+          id: props.firstData.data.id,
+          tableName: props.secondData.tableName,
+          columnName: props.referenceNameRelationId,
+        }),
+      );
 
-      await trx
-        .table(firstData.tableName)
-        .update({ deleted_at: timestamp })
-        .where('id', firstData.data.id)
-        .returning('*');
+      await this.updateSoftDelete({
+        trx,
+        id: props.firstData.data.id,
+        tableName: props.firstData.tableName,
+      });
 
-      const [deletedFirstRecord] = await trx
-        .table(firstData.tableName)
-        .delete()
-        .where('id', firstData.data.id)
-        .returning('*');
+      const deletedFirstRecord = await this.validateEntity(
+        await this.deleteAndReturn({
+          trx,
+          id: props.firstData.data.id,
+          tableName: props.firstData.tableName,
+        }),
+      );
 
-      if (config.renameProps) {
-        deletedFirstRecord[config.firstDataConfig.newName] =
-          deletedFirstRecord[config.firstDataConfig.oldName];
-        delete deletedFirstRecord[config.firstDataConfig.oldName];
-
-        deletedSecondRecord[config.secondDataConfig.newName] =
-          deletedSecondRecord[config.secondDataConfig.oldName];
-        delete deletedSecondRecord[config.secondDataConfig.oldName];
+      if (props.config.renameProps) {
+        this.renameProperties(deletedFirstRecord, props.config.firstDataConfig);
+        this.renameProperties(
+          deletedSecondRecord,
+          props.config.secondDataConfig,
+        );
       }
 
       const innerDeletedRecords = {
@@ -206,9 +168,87 @@ export class KnexAuditRepository<T> extends KnexRepository<T> {
         ...deletedSecondRecord,
       };
 
-      await trx.table(this.tableNameHistory).insert(innerDeletedRecords);
+      await this.insertHistory(trx, innerDeletedRecords);
 
       return innerDeletedRecords;
     });
+  }
+
+  private async transaction(callback: (trx: Knex.Transaction) => Promise<any>) {
+    let result: Promise<any>;
+    const trx = await this.client.transaction();
+    try {
+      result = await callback(trx);
+      await trx.commit();
+    } catch (error) {
+      await trx.rollback();
+      throw error;
+    }
+    return result;
+  }
+
+  private validateEntity(data: any) {
+    if (!data) throw new Error('Entity does not exists');
+    return data;
+  }
+
+  private async insertAndReturn(
+    trx: Knex.Transaction,
+    data: T,
+    tableName?: string,
+  ) {
+    const [record] = await trx
+      .table(tableName ?? this.tableName)
+      .insert(data)
+      .returning('*');
+    return record;
+  }
+
+  private async insertHistory(trx: Knex.Transaction, record: T) {
+    await trx.table(this.tableNameHistory).insert(record);
+  }
+
+  private renameProperties(record: any, config: DataConfig) {
+    record[config.newName] = record[config.oldName];
+    delete record[config.oldName];
+  }
+
+  private async updateAndReturn(props: {
+    trx: Knex.Transaction;
+    id: string | number;
+    data: any;
+    tableName?: string;
+    columnName?: string;
+  }) {
+    const [record] = await props.trx
+      .table(props?.tableName ?? this.tableName)
+      .update(props.data)
+      .where(props?.columnName ?? 'id', props.id)
+      .returning('*');
+    return record;
+  }
+  private async deleteAndReturn(props: {
+    trx: Knex.Transaction;
+    id: string | number;
+    tableName?: string;
+    columnName?: string;
+  }) {
+    const [record] = await props.trx
+      .table(props?.tableName ?? this.tableName)
+      .delete()
+      .where(props?.columnName ?? 'id', props.id)
+      .returning('*');
+    return record;
+  }
+
+  private async updateSoftDelete(props: {
+    trx: Knex.Transaction;
+    id: string | number;
+    tableName?: string;
+  }) {
+    await props.trx
+      .table(props?.tableName ?? this.tableName)
+      .update({ deleted_at: new Date().toISOString() })
+      .where('id', props.id);
   }
 }

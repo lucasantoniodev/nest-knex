@@ -15,11 +15,11 @@ export class CollectionTextItemService {
   }
 
   async create(data: any) {
-    return this.knexRepository.createWithAudit(data);
+    return this.knexRepository.createOneAudit(data);
   }
 
   async createTwoEntityWithOnceAudit(data: CollectionTextItemEntity) {
-    return this.knexRepository.createTwoRelationWithOnceAudit(
+    return this.knexRepository.createTwoInOneAudit(
       {
         tableName: 'collection_item',
         data: {
@@ -55,8 +55,8 @@ export class CollectionTextItemService {
     id: string,
     data: CollectionTextItemUpdateRequestDto,
   ) {
-    return this.knexRepository.updateTwoRelationWithOnceAudit(
-      {
+    return this.knexRepository.updateTwoInOneAudit({
+      firstData: {
         tableName: 'collection_item',
         data: {
           id: id,
@@ -69,7 +69,7 @@ export class CollectionTextItemService {
           expiry_date: data?.expiry_date,
         },
       },
-      {
+      secondData: {
         tableName: 'text_item',
         data: {
           id: data?.item?.id,
@@ -79,8 +79,8 @@ export class CollectionTextItemService {
           validate_min_length: data?.item?.validate_min_length,
         },
       },
-      {
-        referenceNameRelationId: 'collection_item_id',
+      referenceNameRelationId: 'collection_item_id',
+      config: {
         renameProps: true,
         firstDataConfig: {
           oldName: 'id',
@@ -91,25 +91,25 @@ export class CollectionTextItemService {
           newName: 'text_item_id',
         },
       },
-    );
+    });
   }
 
   async delete(id: string) {
-    return this.knexRepository.deleteTwoRelationWithOnceAuditByRelationId(
-      {
+    return this.knexRepository.deleteForTwoInOneAudit({
+      firstData: {
         tableName: 'collection_item',
         data: {
           id: id,
         },
       },
-      {
+      secondData: {
         tableName: 'text_item',
         data: {
           collection_item_id: id,
         },
       },
-      {
-        referenceNameRelationId: 'collection_item_id',
+      referenceNameRelationId: 'collection_item_id',
+      config: {
         renameProps: true,
         firstDataConfig: {
           oldName: 'id',
@@ -120,11 +120,11 @@ export class CollectionTextItemService {
           newName: 'text_item_id',
         },
       },
-    );
+    });
   }
 
   async update(id: string, data: any) {
-    return this.knexRepository.updateWithAudit(id, data);
+    return this.knexRepository.updateOneAudit(id, data);
   }
 
   async findAll() {
@@ -132,7 +132,10 @@ export class CollectionTextItemService {
   }
 
   async findById(id: string) {
-    return this.knexRepository.findById(id);
+    return this.knexRepository.findById({
+      columnName: 'collection_item_id',
+      id,
+    });
   }
 
   async findByIdAndVersion(id: string, version: number) {

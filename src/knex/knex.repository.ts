@@ -1,6 +1,7 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Knex } from 'knex';
 import { InjectKnex } from 'nestjs-knex';
+import { IFindByIdProps } from './knex.interface';
 
 @Injectable()
 export class KnexRepository<T> implements OnModuleDestroy {
@@ -46,8 +47,12 @@ export class KnexRepository<T> implements OnModuleDestroy {
     return this.knex.select().table(this.tableName);
   }
 
-  async findById(id: string | number) {
-    return this.knex.select().where('id', id).table(this.tableName).first();
+  async findById(props: IFindByIdProps) {
+    return this.knex
+      .select()
+      .where(props?.columnName ?? 'id', props.id)
+      .table(this.tableName)
+      .first();
   }
 
   async delete(id: string | number) {
