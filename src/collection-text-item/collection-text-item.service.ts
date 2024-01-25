@@ -1,56 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { KnexAuditRepository } from 'src/knex/knex-audit.repository';
 import {
-  CollectionTextItemEntity,
+  CollectionItemModel,
   CollectionTextItemUpdateRequestDto,
+  CreateCollectionTextItemRequestDto,
 } from './collection-text-item.model';
+import { CollectionTextItemRepository } from './collection-text-item.repository';
+import { CollectionTextItemConverter } from './converter/collection-text-item.converter';
 
 @Injectable()
 export class CollectionTextItemService {
   constructor(
     private readonly knexAuditRepository: KnexAuditRepository<
-      CollectionTextItemEntity,
+      CollectionItemModel,
       void
     >,
+    private readonly repository: CollectionTextItemRepository,
+    private readonly converter: CollectionTextItemConverter,
   ) {
     this.knexAuditRepository.setTableName('text_item', 'text_item_history');
   }
 
-  async create(data: any) {
-    return this.knexAuditRepository.createSimpleAudit(data);
-  }
-
-  async createTwoEntityWithOnceAudit(data: CollectionTextItemEntity) {
-    return this.knexAuditRepository.createInheritanceAudit({
-      baseData: {
-        tableName: 'collection_item',
-        data: {
-          type: data.type,
-          code: data.code,
-          workcenter_id: data.workcenter_id,
-          title: data.title,
-          description: data.description,
-          filePath: data.filePath,
-          expiry_date: data.expiry_date,
-        },
-      },
-      childData: {
-        tableName: 'text_item',
-        data: data.item,
-      },
-      referenceNameRelationId: 'collection_item_id',
-      config: {
-        renameProps: true,
-        baseDataConfig: {
-          oldName: 'id',
-          newName: 'collection_item_id',
-        },
-        childDataConfig: {
-          oldName: 'id',
-          newName: 'text_item_id',
-        },
-      },
-    });
+  public async create(data: CreateCollectionTextItemRequestDto) {
+    const { baseData, childData } = this.converter.convertCreateRequest(data);
+    return this.repository.create(baseData, childData);
   }
 
   async updateTwoEntityWithOnceAudit(
@@ -83,7 +56,7 @@ export class CollectionTextItemService {
       },
       referenceNameRelationId: 'collection_item_id',
       config: {
-        renameProps: true,
+        hasRename: true,
         baseDataConfig: {
           oldName: 'id',
           newName: 'collection_item_id',
@@ -112,7 +85,7 @@ export class CollectionTextItemService {
       },
       referenceNameRelationId: 'collection_item_id',
       config: {
-        renameProps: true,
+        hasRename: true,
         baseDataConfig: {
           oldName: 'id',
           newName: 'collection_item_id',

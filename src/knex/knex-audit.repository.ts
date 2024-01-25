@@ -54,7 +54,7 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
         }),
       );
 
-      if (props.config.renameProps) {
+      if (props.config.hasRename) {
         this.renameProperties(createdFirstRecord, props.config.baseDataConfig);
         this.renameProperties(
           createdSecondRecord,
@@ -110,7 +110,7 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
         }),
       );
 
-      if (props.config.renameProps) {
+      if (props.config.hasRename) {
         this.renameProperties(updatedFirstRecord, props.config.baseDataConfig);
         this.renameProperties(
           updatedSecondRecord,
@@ -167,7 +167,7 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
         }),
       );
 
-      if (props.config.renameProps) {
+      if (props.config.hasRename) {
         this.renameProperties(deletedFirstRecord, props.config.baseDataConfig);
         this.renameProperties(
           deletedSecondRecord,

@@ -9,19 +9,20 @@ import {
 } from '@nestjs/common';
 import { CollectionTextItemService } from './collection-text-item.service';
 import {
-  CollectionTextItemEntity,
+  CollectionItemModel,
   CollectionTextItemUpdateRequestDto,
+  CreateCollectionTextItemRequestDto,
 } from './collection-text-item.model';
 
 @Controller('collection-text-item')
-export class CollectionItemController {
+export class CollectionTextItemController {
   constructor(
     private readonly collectionTextItemService: CollectionTextItemService,
   ) {}
 
   @Post()
-  createWithTwoEntites(@Body() data: CollectionTextItemEntity) {
-    return this.collectionTextItemService.createTwoEntityWithOnceAudit(data);
+  createWithTwoEntites(@Body() data: CreateCollectionTextItemRequestDto) {
+    return this.collectionTextItemService.create(data);
   }
 
   @Put('/:id')

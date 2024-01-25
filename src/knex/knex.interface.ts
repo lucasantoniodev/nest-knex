@@ -13,7 +13,7 @@ export interface IActionInheritanceProps {
   childData: AuditProps;
   referenceNameRelationId: string;
   config: {
-    renameProps: boolean;
+    hasRename: boolean;
     baseDataConfig: DataConfig;
     childDataConfig: DataConfig;
   };
