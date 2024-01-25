@@ -63,7 +63,7 @@ export class KnexRepository<T> implements OnModuleDestroy {
     firstData: ConfigProps,
     secondData: ConfigProps,
     config: {
-      nameToRelationSecondRecord: string;
+      referenceNameRelationId: string;
       renameProps: boolean;
       firstDataConfig: DataConfig;
       secondDataConfig: DataConfig;
@@ -75,8 +75,7 @@ export class KnexRepository<T> implements OnModuleDestroy {
         .insert(firstData.data)
         .returning('*');
 
-      secondData.data[config.nameToRelationSecondRecord] =
-        createdFirstRecord.id;
+      secondData.data[config.referenceNameRelationId] = createdFirstRecord.id;
       const [createdSecondRecord] = await trx
         .table(secondData.tableName)
         .insert(secondData.data)
@@ -92,14 +91,14 @@ export class KnexRepository<T> implements OnModuleDestroy {
         delete createdSecondRecord[config.secondDataConfig.oldName];
       }
 
-      const innerUpdatedRecords = {
+      const innerCreatedRecords = {
         ...createdFirstRecord,
         ...createdSecondRecord,
       };
 
-      await trx.table(this.tableNameHistory).insert(innerUpdatedRecords);
+      await trx.table(this.tableNameHistory).insert(innerCreatedRecords);
 
-      return innerUpdatedRecords;
+      return innerCreatedRecords;
     });
   }
 
@@ -143,7 +142,6 @@ export class KnexRepository<T> implements OnModuleDestroy {
         .where('id', firstData.data.id)
         .returning('*');
 
-      console.log(secondData.data);
       const [updatedSecondRecord] = await trx
         .table(secondData.tableName)
         .update(secondData.data)
@@ -168,6 +166,57 @@ export class KnexRepository<T> implements OnModuleDestroy {
       await trx.table(this.tableNameHistory).insert(innerUpdatedRecords);
 
       return innerUpdatedRecords;
+    });
+  }
+
+  async deleteTwoRelationWithOnceAuditByRelationId(
+    firstData: ConfigProps,
+    secondData: ConfigProps,
+    config: {
+      referenceNameRelationId: string;
+      renameProps: boolean;
+      firstDataConfig: DataConfig;
+      secondDataConfig: DataConfig;
+    },
+  ) {
+    const timestamp = new Date().toISOString();
+    return await this.knex.transaction(async (trx) => {
+      const [deletedSecondRecord] = await trx
+        .table(secondData.tableName)
+        .delete()
+        .where(config.referenceNameRelationId, firstData.data.id)
+        .returning('*');
+
+      await trx
+        .table(firstData.tableName)
+        .update({ deleted_at: timestamp })
+        .where('id', firstData.data.id)
+        .returning('*');
+
+      const [deletedFirstRecord] = await trx
+        .table(firstData.tableName)
+        .delete()
+        .where('id', firstData.data.id)
+        .returning('*');
+
+      if (config.renameProps) {
+        deletedFirstRecord[config.firstDataConfig.newName] =
+          deletedFirstRecord[config.firstDataConfig.oldName];
+        delete deletedFirstRecord[config.firstDataConfig.oldName];
+
+        deletedSecondRecord[config.secondDataConfig.newName] =
+          deletedSecondRecord[config.secondDataConfig.oldName];
+        delete deletedSecondRecord[config.secondDataConfig.oldName];
+      }
+
+      const innerDeletedRecords = {
+        ...deletedFirstRecord,
+        ...deletedSecondRecord,
+      };
+
+      await trx.table(this.tableNameHistory).insert(innerDeletedRecords);
+
+      return innerDeletedRecords;
     });
   }
 

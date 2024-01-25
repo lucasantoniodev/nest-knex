@@ -36,7 +36,7 @@ export class CollectionTextItemService {
         data: data.item,
       },
       {
-        nameToRelationSecondRecord: 'collection_item_id',
+        referenceNameRelationId: 'collection_item_id',
         renameProps: true,
         firstDataConfig: {
           oldName: 'id',
@@ -93,6 +93,35 @@ export class CollectionTextItemService {
     );
   }
 
+  async delete(id: string) {
+    return this.knexRepository.deleteTwoRelationWithOnceAuditByRelationId(
+      {
+        tableName: 'collection_item',
+        data: {
+          id: id,
+        },
+      },
+      {
+        tableName: 'text_item',
+        data: {
+          collection_item_id: id,
+        },
+      },
+      {
+        referenceNameRelationId: 'collection_item_id',
+        renameProps: true,
+        firstDataConfig: {
+          oldName: 'id',
+          newName: 'collection_item_id',
+        },
+        secondDataConfig: {
+          oldName: 'id',
+          newName: 'text_item_id',
+        },
+      },
+    );
+  }
+
   async update(id: string, data: any) {
     return this.knexRepository.updateWithAudit(id, data);
   }
@@ -107,9 +136,5 @@ export class CollectionTextItemService {
 
   async findByIdAndVersion(id: string, version: number) {
     return this.knexRepository.findByIdAndVersion(id, version);
-  }
-
-  async delete(id: string) {
-    return this.knexRepository.deleteWithAudit(id);
   }
 }
