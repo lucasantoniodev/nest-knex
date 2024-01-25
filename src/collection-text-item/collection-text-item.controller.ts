@@ -21,29 +21,26 @@ export class CollectionTextItemController {
   ) {}
 
   @Post()
-  createWithTwoEntites(@Body() data: CreateCollectionTextItemRequestDto) {
+  create(@Body() data: CreateCollectionTextItemRequestDto) {
     return this.collectionTextItemService.create(data);
   }
 
   @Put('/:id')
-  updateWithTwoEntities(
+  update(
     @Param('id') id: string,
     @Body() data: CollectionTextItemUpdateRequestDto,
   ) {
-    return this.collectionTextItemService.updateTwoEntityWithOnceAudit(
-      id,
-      data,
-    );
+    return this.collectionTextItemService.update(id, data);
   }
 
   @Get()
   findAll() {
-    return this.collectionTextItemService.findAll();
+    return 'findAll() Não implementado';
   }
 
   @Get('/:id')
   findById(@Param('id') id: string) {
-    return 'Não implementado';
+    return 'findById() Não implementado';
   }
 
   @Get('/:id/:version')
@@ -51,7 +48,7 @@ export class CollectionTextItemController {
     @Param('id') id: string,
     @Param('version') version: number,
   ) {
-    return this.collectionTextItemService.findByIdAndVersion(id, version);
+    return 'findByIdAndVersion() Não implementado';
   }
 
   @Delete('/:id')

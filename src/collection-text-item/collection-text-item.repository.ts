@@ -13,15 +13,45 @@ export class CollectionTextItemRepository {
       CollectionItemModel,
       CollectionTextItemHistoryModel
     >,
-  ) {}
+  ) {
+    this.knexAuditRepository.setTableName('text_item', 'text_item_history');
+  }
 
   public async create(baseData: CollectionItemModel, childData: TextItemModel) {
-    return this.knexAuditRepository.createInheritanceAudit({
+    return this.knexAuditRepository.createInheritanceAudit(
+      this.generateInheritanceConfig({ baseData, childData }),
+    );
+  }
+
+  public async update(baseData: CollectionItemModel, childData: TextItemModel) {
+    return this.knexAuditRepository.updateInheritanceAudit(
+      this.generateInheritanceConfig({ baseData, childData }),
+    );
+  }
+
+  public async delete(id: string) {
+    return this.knexAuditRepository.deleteInheritanceAudit(
+      this.generateInheritanceConfig({ id }),
+    );
+  }
+
+  private generateInheritanceConfig({
+    id,
+    baseData,
+    childData,
+  }: {
+    id?: string;
+    baseData?: CollectionItemModel;
+    childData?: TextItemModel;
+  }) {
+    return {
       baseData: {
+        id,
         tableName: 'collection_item',
         data: baseData,
       },
       childData: {
+        id,
         tableName: 'text_item',
         data: childData,
       },
@@ -31,6 +61,6 @@ export class CollectionTextItemRepository {
         baseDataConfig: { oldName: 'id', newName: 'collection_item_id' },
         childDataConfig: { oldName: 'id', newName: 'text_item_id' },
       },
-    });
+    };
   }
 }

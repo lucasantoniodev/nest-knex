@@ -49,11 +49,8 @@ export interface CollectionTextItemUpdateRequestDto {
   filePath?: string;
   expiry_date?: Date;
   version?: number;
-  item?: {
-    id?: string;
-    collection_item_id?: string;
-    min_length?: number;
-    max_length?: number;
-    validate_min_length?: boolean;
-  };
+  collection_item_id?: string;
+  min_length?: number;
+  max_length?: number;
+  validate_min_length?: boolean;
 }

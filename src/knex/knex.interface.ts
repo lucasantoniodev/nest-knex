@@ -1,6 +1,7 @@
 export interface AuditProps {
   tableName?: string;
-  data?: any;
+  id?: string | number;
+  data: any;
 }
 
 export interface DataConfig {

@@ -147,7 +147,7 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
       const deletedSecondRecord = this.validateEntity(
         await this.deleteAndReturn({
           trx,
-          id: props.baseData.data.id,
+          id: props.baseData.id,
           tableName: props.childData.tableName,
           columnName: props.referenceNameRelationId,
         }),
@@ -155,14 +155,14 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
 
       await this.updateSoftDelete({
         trx,
-        id: props.baseData.data.id,
+        id: props.baseData.id,
         tableName: props.baseData.tableName,
       });
 
       const deletedFirstRecord = await this.validateEntity(
         await this.deleteAndReturn({
           trx,
-          id: props.baseData.data.id,
+          id: props.baseData.id,
           tableName: props.baseData.tableName,
         }),
       );
