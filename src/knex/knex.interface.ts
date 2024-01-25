@@ -14,8 +14,8 @@ export interface IActionInheritanceProps {
   referenceNameRelationId: string;
   config: {
     renameProps: boolean;
-    firstDataConfig: DataConfig;
-    secondDataConfig: DataConfig;
+    baseDataConfig: DataConfig;
+    childDataConfig: DataConfig;
   };
 }
 
@@ -23,9 +23,4 @@ export interface IFindByIdAndVersionProps {
   columnName?: string;
   id: string | number;
   version: number;
-}
-
-export interface IFindByIdProps {
-  columnName?: string;
-  id: string | number;
 }

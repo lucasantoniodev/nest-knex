@@ -1,26 +1,28 @@
 import { Injectable } from '@nestjs/common';
-import { KnexRepository } from 'src/knex/knex.repository';
+import { KnexAuditRepository } from 'src/knex/knex-audit.repository';
 import {
   CollectionTextItemEntity,
   CollectionTextItemUpdateRequestDto,
 } from './collection-text-item.model';
-import { KnexAuditRepository } from 'src/knex/knex-audit.repository';
 
 @Injectable()
 export class CollectionTextItemService {
   constructor(
-    private readonly knexRepository: KnexAuditRepository<CollectionTextItemEntity>,
+    private readonly knexAuditRepository: KnexAuditRepository<
+      CollectionTextItemEntity,
+      void
+    >,
   ) {
-    this.knexRepository.setTableName('text_item', 'text_item_history');
+    this.knexAuditRepository.setTableName('text_item', 'text_item_history');
   }
 
   async create(data: any) {
-    return this.knexRepository.createSimpleAudit(data);
+    return this.knexAuditRepository.createSimpleAudit(data);
   }
 
   async createTwoEntityWithOnceAudit(data: CollectionTextItemEntity) {
-    return this.knexRepository.createInheritanceAudit(
-      {
+    return this.knexAuditRepository.createInheritanceAudit({
+      baseData: {
         tableName: 'collection_item',
         data: {
           type: data.type,
@@ -32,30 +34,30 @@ export class CollectionTextItemService {
           expiry_date: data.expiry_date,
         },
       },
-      {
+      childData: {
         tableName: 'text_item',
         data: data.item,
       },
-      {
-        referenceNameRelationId: 'collection_item_id',
+      referenceNameRelationId: 'collection_item_id',
+      config: {
         renameProps: true,
-        firstDataConfig: {
+        baseDataConfig: {
           oldName: 'id',
           newName: 'collection_item_id',
         },
-        secondDataConfig: {
+        childDataConfig: {
           oldName: 'id',
           newName: 'text_item_id',
         },
       },
-    );
+    });
   }
 
   async updateTwoEntityWithOnceAudit(
     id: string,
     data: CollectionTextItemUpdateRequestDto,
   ) {
-    return this.knexRepository.updateTwoInOneAudit({
+    return this.knexAuditRepository.updateInheritanceAudit({
       baseData: {
         tableName: 'collection_item',
         data: {
@@ -82,11 +84,11 @@ export class CollectionTextItemService {
       referenceNameRelationId: 'collection_item_id',
       config: {
         renameProps: true,
-        firstDataConfig: {
+        baseDataConfig: {
           oldName: 'id',
           newName: 'collection_item_id',
         },
-        secondDataConfig: {
+        childDataConfig: {
           oldName: 'id',
           newName: 'text_item_id',
         },
@@ -95,7 +97,7 @@ export class CollectionTextItemService {
   }
 
   async delete(id: string) {
-    return this.knexRepository.deleteForTwoInOneAudit({
+    return this.knexAuditRepository.deleteInheritanceAudit({
       baseData: {
         tableName: 'collection_item',
         data: {
@@ -111,11 +113,11 @@ export class CollectionTextItemService {
       referenceNameRelationId: 'collection_item_id',
       config: {
         renameProps: true,
-        firstDataConfig: {
+        baseDataConfig: {
           oldName: 'id',
           newName: 'collection_item_id',
         },
-        secondDataConfig: {
+        childDataConfig: {
           oldName: 'id',
           newName: 'text_item_id',
         },
@@ -124,22 +126,15 @@ export class CollectionTextItemService {
   }
 
   async update(id: string, data: any) {
-    return this.knexRepository.updateOneAudit(id, data);
+    return this.knexAuditRepository.updateSimpleAudit(id, data);
   }
 
   async findAll() {
-    return this.knexRepository.findAll();
-  }
-
-  async findById(id: string) {
-    return this.knexRepository.findById({
-      columnName: 'collection_item_id',
-      id,
-    });
+    return this.knexAuditRepository.findAll();
   }
 
   async findByIdAndVersion(id: string, version: number) {
-    return this.knexRepository.findByIdAndVersion({
+    return this.knexAuditRepository.findAuditByIdAndVersion({
       columnName: 'collection_item_id',
       id,
       version,

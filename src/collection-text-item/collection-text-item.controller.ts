@@ -42,7 +42,7 @@ export class CollectionItemController {
 
   @Get('/:id')
   findById(@Param('id') id: string) {
-    return this.collectionTextItemService.findById(id);
+    return 'Não implementado';
   }
 
   @Get('/:id/:version')
