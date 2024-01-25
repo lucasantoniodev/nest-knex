@@ -15,11 +15,11 @@ export class CollectionTextItemService {
   }
 
   async create(data: any) {
-    return this.knexRepository.createOneAudit(data);
+    return this.knexRepository.createSimpleAudit(data);
   }
 
   async createTwoEntityWithOnceAudit(data: CollectionTextItemEntity) {
-    return this.knexRepository.createTwoInOneAudit(
+    return this.knexRepository.createInheritanceAudit(
       {
         tableName: 'collection_item',
         data: {
@@ -56,7 +56,7 @@ export class CollectionTextItemService {
     data: CollectionTextItemUpdateRequestDto,
   ) {
     return this.knexRepository.updateTwoInOneAudit({
-      firstData: {
+      baseData: {
         tableName: 'collection_item',
         data: {
           id: id,
@@ -69,7 +69,7 @@ export class CollectionTextItemService {
           expiry_date: data?.expiry_date,
         },
       },
-      secondData: {
+      childData: {
         tableName: 'text_item',
         data: {
           id: data?.item?.id,
@@ -96,13 +96,13 @@ export class CollectionTextItemService {
 
   async delete(id: string) {
     return this.knexRepository.deleteForTwoInOneAudit({
-      firstData: {
+      baseData: {
         tableName: 'collection_item',
         data: {
           id: id,
         },
       },
-      secondData: {
+      childData: {
         tableName: 'text_item',
         data: {
           collection_item_id: id,

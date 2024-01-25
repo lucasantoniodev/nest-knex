@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import {
-  ConfigProps,
+  AuditProps,
   DataConfig,
   IFindByIdAndVersionProps,
-  IActionForTwoTablesProps,
+  IActionInheritanceProps,
 } from './knex.interface';
 import { KnexRepository } from './knex.repository';
 import { Knex } from 'knex';
@@ -19,7 +19,7 @@ export class KnexAuditRepository<T> extends KnexRepository<T> {
       .first();
   }
 
-  async createOneAudit(data: T) {
+  async createSimpleAudit(data: T) {
     return await this.transaction(async (trx) => {
       const createdRecord = this.validateEntity(
         await this.insertAndReturn(trx, data),
@@ -29,9 +29,9 @@ export class KnexAuditRepository<T> extends KnexRepository<T> {
     });
   }
 
-  async createTwoInOneAudit(
-    firstData: ConfigProps,
-    secondData: ConfigProps,
+  async createInheritanceAudit(
+    firstData: AuditProps,
+    secondData: AuditProps,
     config: {
       referenceNameRelationId: string;
       renameProps: boolean;
@@ -79,23 +79,23 @@ export class KnexAuditRepository<T> extends KnexRepository<T> {
     });
   }
 
-  async updateTwoInOneAudit(props: IActionForTwoTablesProps) {
+  async updateTwoInOneAudit(props: IActionInheritanceProps) {
     return await this.client.transaction(async (trx) => {
       const updatedFirstRecord = this.validateEntity(
         await this.updateAndReturn({
           trx,
-          id: props.firstData.data.id,
-          data: props.firstData.data,
-          tableName: props.firstData.tableName,
+          id: props.baseData.data.id,
+          data: props.baseData.data,
+          tableName: props.baseData.tableName,
         }),
       );
 
       const updatedSecondRecord = this.validateEntity(
         await this.updateAndReturn({
           trx,
-          id: props.firstData.data.id,
-          data: props.secondData.data,
-          tableName: props.secondData.tableName,
+          id: props.baseData.data.id,
+          data: props.childData.data,
+          tableName: props.childData.tableName,
           columnName: props.referenceNameRelationId,
         }),
       );
@@ -130,28 +130,28 @@ export class KnexAuditRepository<T> extends KnexRepository<T> {
     });
   }
 
-  async deleteForTwoInOneAudit(props: IActionForTwoTablesProps) {
+  async deleteForTwoInOneAudit(props: IActionInheritanceProps) {
     return await this.transaction(async (trx) => {
       const deletedSecondRecord = this.validateEntity(
         await this.deleteAndReturn({
           trx,
-          id: props.firstData.data.id,
-          tableName: props.secondData.tableName,
+          id: props.baseData.data.id,
+          tableName: props.childData.tableName,
           columnName: props.referenceNameRelationId,
         }),
       );
 
       await this.updateSoftDelete({
         trx,
-        id: props.firstData.data.id,
-        tableName: props.firstData.tableName,
+        id: props.baseData.data.id,
+        tableName: props.baseData.tableName,
       });
 
       const deletedFirstRecord = await this.validateEntity(
         await this.deleteAndReturn({
           trx,
-          id: props.firstData.data.id,
-          tableName: props.firstData.tableName,
+          id: props.baseData.data.id,
+          tableName: props.baseData.tableName,
         }),
       );
 
@@ -174,34 +174,9 @@ export class KnexAuditRepository<T> extends KnexRepository<T> {
     });
   }
 
-  private async transaction(callback: (trx: Knex.Transaction) => Promise<any>) {
-    let result: Promise<any>;
-    const trx = await this.client.transaction();
-    try {
-      result = await callback(trx);
-      await trx.commit();
-    } catch (error) {
-      await trx.rollback();
-      throw error;
-    }
-    return result;
-  }
-
   private validateEntity(data: any) {
     if (!data) throw new Error('Entity does not exists');
     return data;
-  }
-
-  private async insertAndReturn(
-    trx: Knex.Transaction,
-    data: T,
-    tableName?: string,
-  ) {
-    const [record] = await trx
-      .table(tableName ?? this.tableName)
-      .insert(data)
-      .returning('*');
-    return record;
   }
 
   private async insertHistory(trx: Knex.Transaction, record: T) {
@@ -211,44 +186,5 @@ export class KnexAuditRepository<T> extends KnexRepository<T> {
   private renameProperties(record: any, config: DataConfig) {
     record[config.newName] = record[config.oldName];
     delete record[config.oldName];
-  }
-
-  private async updateAndReturn(props: {
-    trx: Knex.Transaction;
-    id: string | number;
-    data: any;
-    tableName?: string;
-    columnName?: string;
-  }) {
-    const [record] = await props.trx
-      .table(props?.tableName ?? this.tableName)
-      .update(props.data)
-      .where(props?.columnName ?? 'id', props.id)
-      .returning('*');
-    return record;
-  }
-  private async deleteAndReturn(props: {
-    trx: Knex.Transaction;
-    id: string | number;
-    tableName?: string;
-    columnName?: string;
-  }) {
-    const [record] = await props.trx
-      .table(props?.tableName ?? this.tableName)
-      .delete()
-      .where(props?.columnName ?? 'id', props.id)
-      .returning('*');
-    return record;
-  }
-
-  private async updateSoftDelete(props: {
-    trx: Knex.Transaction;
-    id: string | number;
-    tableName?: string;
-  }) {
-    await props.trx
-      .table(props?.tableName ?? this.tableName)
-      .update({ deleted_at: new Date().toISOString() })
-      .where('id', props.id);
   }
 }

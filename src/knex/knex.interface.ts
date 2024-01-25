@@ -1,4 +1,4 @@
-export interface ConfigProps {
+export interface AuditProps {
   tableName?: string;
   data?: any;
 }
@@ -8,9 +8,9 @@ export interface DataConfig {
   newName?: string;
 }
 
-export interface IActionForTwoTablesProps {
-  firstData: ConfigProps;
-  secondData: ConfigProps;
+export interface IActionInheritanceProps {
+  baseData: AuditProps;
+  childData: AuditProps;
   referenceNameRelationId: string;
   config: {
     renameProps: boolean;
