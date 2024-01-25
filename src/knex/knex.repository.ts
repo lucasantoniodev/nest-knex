@@ -1,14 +1,13 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Knex } from 'knex';
 import { InjectKnex } from 'nestjs-knex';
-import { IFindByIdProps } from './knex.interface';
 
 @Injectable()
 export class KnexRepository<T> implements OnModuleDestroy {
   public tableName: string = '';
   public tableNameHistory: string = `${this.tableName}_history`;
 
-  constructor(@InjectKnex() private readonly knex: Knex) {}
+  public constructor(@InjectKnex() private readonly knex: Knex) {}
 
   public onModuleDestroy() {
     if (this.knex) {
@@ -17,59 +16,43 @@ export class KnexRepository<T> implements OnModuleDestroy {
     }
   }
 
+  public get client() {
+    return this.knex;
+  }
+
   public setTableName(tableName: string, tableNameHistory?: string) {
     this.tableName = tableName;
     if (tableNameHistory) this.tableNameHistory = tableNameHistory;
   }
 
-  get client() {
-    return this.knex;
+  public async create(data: T): Promise<T> {
+    return await this.transaction(async (trx) => {
+      return await this.insertAndReturn({ trx, data });
+    });
   }
 
-  async create(data: T) {
-    const [createdRecord] = await this.knex
-      .insert(data)
-      .into(this.tableName)
-      .returning('*');
-    return createdRecord;
+  public async update(id: string | number, data: T): Promise<T> {
+    return await this.transaction(async (trx) => {
+      return await this.updateAndReturn({ trx, id, data });
+    });
   }
 
-  async update(id: string | number, data: T) {
-    const [updatedRecord] = await this.knex
-      .update(data)
-      .where('id', id)
-      .into(this.tableName)
-      .returning('*');
-    return updatedRecord;
+  public async findAll(): Promise<T[]> {
+    return await this.transaction(async (trx) => {
+      return trx.table(this.tableName).select();
+    });
   }
 
-  async findAll() {
-    return this.knex.select().table(this.tableName);
+  public async findById(id: string | number): Promise<T> {
+    return await this.transaction(async (trx) => {
+      return trx.table(this.tableName).select().where('id', id).first();
+    });
   }
 
-  async findById(props: IFindByIdProps) {
-    return this.knex
-      .select()
-      .where(props?.columnName ?? 'id', props.id)
-      .table(this.tableName)
-      .first();
-  }
-
-  async delete(id: string | number) {
-    const timestamp = new Date().toISOString();
-    return this.knex.transaction(async (trx) => {
-      await trx
-        .table(this.tableName)
-        .update({ deleted_at: timestamp })
-        .where('id', id);
-
-      const [deletedRecord] = await trx
-        .table(this.tableName)
-        .delete()
-        .where('id', id)
-        .returning('*');
-
-      return deletedRecord;
+  public async delete(id: string | number): Promise<T> {
+    return await this.transaction(async (trx) => {
+      await this.updateSoftDelete({ trx, id });
+      return await this.deleteAndReturn({ trx, id });
     });
   }
 
@@ -88,14 +71,14 @@ export class KnexRepository<T> implements OnModuleDestroy {
     return result;
   }
 
-  protected async insertAndReturn(
-    trx: Knex.Transaction,
-    data: T,
-    tableName?: string,
-  ) {
-    const [record] = await trx
-      .table(tableName ?? this.tableName)
-      .insert(data)
+  protected async insertAndReturn(props: {
+    trx: Knex.Transaction;
+    data: T;
+    tableName?: string;
+  }) {
+    const [record] = await props.trx
+      .table(props?.tableName ?? this.tableName)
+      .insert(props.data)
       .returning('*');
     return record;
   }
