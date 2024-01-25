@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { KnexModule } from 'nestjs-knex';
+import { KnexAuditRepository } from './knex-audit.repository';
+import { KnexRepository } from './knex.repository';
 
 @Module({
   imports: [
@@ -24,5 +26,7 @@ import { KnexModule } from 'nestjs-knex';
       }),
     }),
   ],
+  providers: [KnexRepository, KnexAuditRepository],
+  exports: [KnexRepository, KnexAuditRepository],
 })
 export class KnexAppModule {}

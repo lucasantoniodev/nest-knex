@@ -4,11 +4,12 @@ import {
   CollectionTextItemEntity,
   CollectionTextItemUpdateRequestDto,
 } from './collection-text-item.model';
+import { KnexAuditRepository } from 'src/knex/knex-audit.repository';
 
 @Injectable()
 export class CollectionTextItemService {
   constructor(
-    private readonly knexRepository: KnexRepository<CollectionTextItemEntity>,
+    private readonly knexRepository: KnexAuditRepository<CollectionTextItemEntity>,
   ) {
     this.knexRepository.setTableName('text_item', 'text_item_history');
   }
@@ -135,6 +136,10 @@ export class CollectionTextItemService {
   }
 
   async findByIdAndVersion(id: string, version: number) {
-    return this.knexRepository.findByIdAndVersion(id, version);
+    return this.knexRepository.findByIdAndVersion({
+      columnName: 'collection_item_id',
+      id,
+      version,
+    });
   }
 }
