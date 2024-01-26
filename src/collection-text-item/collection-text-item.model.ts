@@ -1,12 +1,12 @@
 export interface CollectionItemModel {
   id?: string;
-  type: number;
-  code: number;
-  workcenter_id: number;
-  title: string;
-  description: string;
+  type?: number;
+  code?: number;
+  workcenter_id?: number;
+  title?: string;
+  description?: string;
   filePath?: string;
-  expiry_date: Date;
+  expiry_date?: Date;
   version?: number;
 }
 

@@ -5,6 +5,7 @@ import {
   CollectionTextItemHistoryModel,
   TextItemModel,
 } from './collection-text-item.model';
+import { IActionInheritanceProps } from 'src/knex/knex.interface';
 
 @Injectable()
 export class CollectionTextItemRepository {
@@ -13,9 +14,7 @@ export class CollectionTextItemRepository {
       CollectionItemModel,
       CollectionTextItemHistoryModel
     >,
-  ) {
-    this.knexAuditRepository.setTableName('text_item', 'text_item_history');
-  }
+  ) {}
 
   public async create(baseData: CollectionItemModel, childData: TextItemModel) {
     return this.knexAuditRepository.createInheritanceAudit(
@@ -30,7 +29,7 @@ export class CollectionTextItemRepository {
   }
 
   public async delete(id: string) {
-    const config = this.generateInheritanceConfig({});
+    const config = this.generateInheritanceConfig({ baseData: {} });
     config.baseData.data.id = id;
     return this.knexAuditRepository.deleteInheritanceAudit(config);
   }
@@ -41,14 +40,16 @@ export class CollectionTextItemRepository {
   }: {
     baseData?: CollectionItemModel;
     childData?: TextItemModel;
-  }) {
+  }): IActionInheritanceProps {
     return {
       baseData: {
         tableName: 'collection_item',
+        tableNameHistory: '',
         data: baseData,
       },
       childData: {
         tableName: 'text_item',
+        tableNameHistory: 'text_item_history',
         data: childData,
       },
       referenceNameRelationId: 'collection_item_id',

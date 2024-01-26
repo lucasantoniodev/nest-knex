@@ -70,6 +70,14 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
         );
       }
 
+      const revision = await this.insertAndReturn({
+        trx,
+        data: {
+          user: 'Fulano',
+        },
+        tableName: 'revision_history',
+      });
+
       const innerCreatedRecords = {
         ...createdFirstRecord,
         ...createdSecondRecord,
@@ -77,11 +85,11 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
 
       await this.insertHistory(
         trx,
-        innerCreatedRecords,
-        props.tableNameHistory,
+        { ...innerCreatedRecords, revision_history_id: revision.id },
+        props.childData.tableNameHistory,
       );
 
-      return innerCreatedRecords;
+      return { ...innerCreatedRecords, revision_history_id: revision.id };
     });
   }
 
@@ -213,6 +221,14 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
         );
       }
 
+      const revision = await this.insertAndReturn({
+        trx,
+        data: {
+          user: 'Fulano',
+        },
+        tableName: 'revision_history',
+      });
+
       const innerUpdatedRecords = {
         ...updatedFirstRecord,
         ...updatedSecondRecord,
@@ -220,11 +236,11 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
 
       await this.insertHistory(
         trx,
-        innerUpdatedRecords,
-        props?.tableNameHistory,
+        { ...innerUpdatedRecords, revision_history_id: revision.id },
+        props.childData.tableNameHistory,
       );
 
-      return innerUpdatedRecords;
+      return { ...innerUpdatedRecords, revision_history_id: revision.id };
     });
   }
 
@@ -378,14 +394,32 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
         );
       }
 
+      const revision = await this.insertAndReturn({
+        trx,
+        data: {
+          user: 'Fulano',
+        },
+        tableName: 'revision_history',
+      });
+
       const innerDeletedRecords = {
         ...deletedFirstRecord,
         ...deletedSecondRecord,
       };
 
-      await this.insertHistory(trx, innerDeletedRecords);
+      await this.insertHistory(
+        trx,
+        {
+          ...innerDeletedRecords,
+          revision_history_id: revision.id,
+        },
+        props.childData.tableNameHistory,
+      );
 
-      return innerDeletedRecords;
+      return {
+        ...innerDeletedRecords,
+        revision_history_id: revision.id,
+      };
     });
   }
 
