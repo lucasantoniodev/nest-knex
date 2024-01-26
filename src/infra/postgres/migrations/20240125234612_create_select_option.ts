@@ -16,6 +16,7 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('select_option_history', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('uuid_generate_v4()'));
     table.string('select_item_id').notNullable();
+    table.string('select_option_id').notNullable();
     table.string('description').notNullable();
     table.integer('index').notNullable();
     table.boolean('approves').notNullable();

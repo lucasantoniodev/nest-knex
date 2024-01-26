@@ -4,7 +4,9 @@ import { KnexAuditRepository } from 'src/knex/knex-audit.repository';
 import {
   CollectionSelectItemHistoryModel,
   CollectionSelectItemModel,
+  CollectionSelectItemUpdateRequestDto,
   CollectionSelectOption,
+  CollectionSelectOptionUpdateRequestDto,
 } from './collection-select-item.model';
 import { CollectionSelectItemConverter } from './collection-select-item.converter';
 
@@ -19,7 +21,7 @@ export class CollectionSelectItemRepository {
   ) {}
 
   public async create(data: CollectionSelectItemModel) {
-    const baseData = this.converter.convertRequest(data);
+    const baseData = this.converter.convertCreatRequest(data);
     return this.knexAuditRepository.createManyInheritanceAudit(
       this.generateInheritanceConfig({
         baseData,
@@ -29,26 +31,44 @@ export class CollectionSelectItemRepository {
     );
   }
 
+  public async update(
+    idCollection: string,
+    idItem: string,
+    data: CollectionSelectItemUpdateRequestDto,
+  ) {
+    const { baseData, grandChildData } = this.converter.convertUpdateRequest(
+      idCollection,
+      idItem,
+      data,
+    );
+
+    return await this.knexAuditRepository.updateManyInheritanceAudit(
+      this.generateInheritanceConfig({
+        baseData,
+        childData: {},
+        grandChildData,
+      }),
+    );
+  }
+
   private generateInheritanceConfig({
-    id,
     baseData,
     childData,
     grandChildData,
   }: {
-    id?: string;
     baseData?: CollectionItemModel;
     childData?: {};
-    grandChildData: CollectionSelectOption[];
+    grandChildData:
+      | CollectionSelectOption[]
+      | CollectionSelectOptionUpdateRequestDto;
   }) {
     return {
       baseData: {
-        id,
         tableName: 'collection_item',
         tableNameHistory: 'collection_item_history',
         data: baseData,
       },
       childData: {
-        id,
         tableName: 'select_item',
         tableNameHistory: 'select_item_history',
         data: childData,
@@ -64,6 +84,7 @@ export class CollectionSelectItemRepository {
         hasRename: true,
         baseDataConfig: { oldName: 'id', newName: 'collection_item_id' },
         childDataConfig: { oldName: 'id', newName: 'select_item_id' },
+        grandChildDataConfig: { oldName: 'id', newName: 'select_option_id' },
       },
     };
   }

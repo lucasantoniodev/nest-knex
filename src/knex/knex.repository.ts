@@ -73,14 +73,17 @@ export class KnexRepository<T> implements OnModuleDestroy {
 
   protected async insertAndReturn(props: {
     trx: Knex.Transaction;
-    data: T;
+    data: T | T[];
     tableName?: string;
   }) {
-    const [record] = await props.trx
+    const dataArray = Array.isArray(props.data) ? props.data : [props.data];
+
+    const records = await props.trx
       .table(props?.tableName ?? this.tableName)
-      .insert(props.data)
+      .insert(dataArray)
       .returning('*');
-    return record;
+
+    return Array.isArray(props.data) ? records : records[0];
   }
 
   protected async updateSoftDelete(props: {
@@ -105,6 +108,24 @@ export class KnexRepository<T> implements OnModuleDestroy {
       .table(props?.tableName ?? this.tableName)
       .update(props.data)
       .where(props?.columnName ?? 'id', props.id)
+      .returning('*');
+    return record;
+  }
+
+  protected async updateAndReturnByTwoColumns(props: {
+    trx: Knex.Transaction;
+    id: string | number;
+    data: any;
+    tableName: string;
+    columnName: string;
+    secondId: string;
+    secondColumnName?: string;
+  }) {
+    const [record] = await props.trx
+      .table(props.tableName)
+      .update(props.data)
+      .where(props.columnName, props.id)
+      .where(props.secondColumnName, props.secondId)
       .returning('*');
     return record;
   }

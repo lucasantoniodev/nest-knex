@@ -30,28 +30,24 @@ export class CollectionTextItemRepository {
   }
 
   public async delete(id: string) {
-    return this.knexAuditRepository.deleteInheritanceAudit(
-      this.generateInheritanceConfig({ id }),
-    );
+    const config = this.generateInheritanceConfig({});
+    config.baseData.data.id = id;
+    return this.knexAuditRepository.deleteInheritanceAudit(config);
   }
 
   private generateInheritanceConfig({
-    id,
     baseData,
     childData,
   }: {
-    id?: string;
     baseData?: CollectionItemModel;
     childData?: TextItemModel;
   }) {
     return {
       baseData: {
-        id,
         tableName: 'collection_item',
         data: baseData,
       },
       childData: {
-        id,
         tableName: 'text_item',
         data: childData,
       },

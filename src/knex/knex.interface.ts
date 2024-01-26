@@ -1,7 +1,6 @@
 export interface AuditProps {
   tableName?: string;
   tableNameHistory?: string;
-  id?: string | number;
   data: any;
 }
 
@@ -21,6 +20,7 @@ export interface IActionInheritanceProps {
     hasRename: boolean;
     baseDataConfig: DataConfig;
     childDataConfig: DataConfig;
+    grandChildDataConfig?: DataConfig;
   };
 }
 
