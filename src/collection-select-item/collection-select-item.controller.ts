@@ -14,12 +14,11 @@ export class CollectionSelectItemController {
     return this.repository.create(data);
   }
 
-  @Put('/:idCollection/:idItem')
+  @Put('/:idCollection/')
   update(
     @Body() data: CollectionSelectItemUpdateRequestDto,
     @Param('idCollection') idCollection: string,
-    @Param('idItem') idItem: string,
   ) {
-    return this.repository.update(idCollection, idItem, data);
+    return this.repository.update(idCollection, data);
   }
 }

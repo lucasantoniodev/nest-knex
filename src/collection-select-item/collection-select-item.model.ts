@@ -37,7 +37,7 @@ export interface CollectionSelectItemUpdateRequestDto {
   expiry_date?: Date;
   version?: number;
   collection_item_id?: string;
-  options: CollectionSelectOptionUpdateRequestDto;
+  options: CollectionSelectOptionUpdateRequestDto[];
 }
 
 export interface CollectionSelectOptionUpdateRequestDto {

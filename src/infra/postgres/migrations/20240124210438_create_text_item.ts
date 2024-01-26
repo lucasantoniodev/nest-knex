@@ -32,6 +32,7 @@ export async function up(knex: Knex): Promise<void> {
     table.timestamp('created_at');
     table.timestamp('updated_at');
     table.timestamp('deleted_at');
+    table.uuid('revision_history_id').notNullable();
   });
 }
 

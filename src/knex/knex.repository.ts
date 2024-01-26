@@ -73,7 +73,7 @@ export class KnexRepository<T> implements OnModuleDestroy {
 
   protected async insertAndReturn(props: {
     trx: Knex.Transaction;
-    data: T | T[];
+    data: T | any | T[];
     tableName?: string;
   }) {
     const dataArray = Array.isArray(props.data) ? props.data : [props.data];

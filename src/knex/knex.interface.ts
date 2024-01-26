@@ -27,5 +27,6 @@ export interface IActionInheritanceProps {
 export interface IFindByIdAndVersionProps {
   columnName?: string;
   id: string | number;
+  data: Object;
   version: number;
 }

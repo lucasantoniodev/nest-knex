@@ -11,7 +11,23 @@ export async function up(knex: Knex): Promise<void> {
     table.string('description').notNullable();
     table.integer('index').notNullable();
     table.boolean('approves').notNullable();
+    table.integer('version').defaultTo(0);
   });
+
+  await knex.raw(`
+  CREATE OR REPLACE FUNCTION increment_version()
+  RETURNS TRIGGER AS $$
+  BEGIN
+    NEW.version = OLD.version + 1;
+    RETURN NEW;
+  END;
+  $$ LANGUAGE plpgsql;
+
+  CREATE TRIGGER select_option_increment_version
+  BEFORE UPDATE ON select_option
+  FOR EACH ROW
+  EXECUTE FUNCTION increment_version();
+`);
 
   await knex.schema.createTable('select_option_history', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('uuid_generate_v4()'));
@@ -20,10 +36,16 @@ export async function up(knex: Knex): Promise<void> {
     table.string('description').notNullable();
     table.integer('index').notNullable();
     table.boolean('approves').notNullable();
+    table.integer('version').defaultTo(0);
+    table.uuid('revision_history_id').notNullable();
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
   await knex.schema.dropTable('select_option');
+  await knex.raw(`
+  DROP TRIGGER IF EXISTS select_option_increment_version ON select_option;
+  DROP FUNCTION IF EXISTS increment_version();
+`);
   await knex.schema.dropTable('select_option_history');
 }

@@ -129,11 +129,29 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
         );
       }
 
-      await this.insertHistory(
+      const revision = await this.insertAndReturn({
         trx,
-        createdGrandChildRecord,
-        props.grandChildData.tableNameHistory,
-      );
+        data: {
+          user: 'Fulano',
+        },
+        tableName: 'revision_history',
+      });
+
+      if (createdGrandChildRecord instanceof Array) {
+        createdGrandChildRecord.forEach(async (data) => {
+          await this.insertHistory(
+            trx,
+            { ...data, revision_history_id: revision.id },
+            props.grandChildData.tableNameHistory,
+          );
+        });
+      } else {
+        await this.insertHistory(
+          trx,
+          { ...createdGrandChildRecord, revision_history_id: revision.id },
+          props.grandChildData.tableNameHistory,
+        );
+      }
 
       const innerCreatedRecords = {
         ...createdBaseRecord,
@@ -142,11 +160,11 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
 
       await this.insertHistory(
         trx,
-        innerCreatedRecords,
+        { ...innerCreatedRecords, revision_history_id: revision.id },
         props.childData.tableNameHistory,
       );
 
-      return innerCreatedRecords;
+      return { ...innerCreatedRecords, revision_history_id: revision.id };
     });
   }
 
@@ -236,19 +254,43 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
         }),
       );
 
-      const idGrandChild = props.grandChildData.data.id;
-      delete props.grandChildData.data.id;
-      const updatedGrandChildRecord = this.validateEntity(
-        await this.updateAndReturnByTwoColumns({
-          trx,
-          id: idGrandChild,
-          data: props.grandChildData.data,
-          tableName: props.grandChildData.tableName,
-          columnName: props.config.childDataConfig.oldName,
-          secondColumnName: props.config.childDataConfig.newName,
-          secondId: updatedChildRecord.id,
-        }),
-      );
+      if (props.grandChildData.data instanceof Array) {
+        props.grandChildData.data.forEach(async (data) => {
+          const idGrandChild = data.id;
+          delete data.id;
+          this.validateEntity(
+            await this.updateAndReturnByTwoColumns({
+              trx,
+              id: idGrandChild,
+              data: data,
+              tableName: props.grandChildData.tableName,
+              columnName: props.config.childDataConfig.oldName,
+              secondColumnName: props.config.childDataConfig.newName,
+              secondId: updatedChildRecord.id,
+            }),
+          );
+        });
+      } else {
+        const idGrandChild = props.grandChildData.data.id;
+        delete props.grandChildData.data.id;
+        this.validateEntity(
+          await this.updateAndReturnByTwoColumns({
+            trx,
+            id: idGrandChild,
+            data: props.grandChildData.data,
+            tableName: props.grandChildData.tableName,
+            columnName: props.config.childDataConfig.oldName,
+            secondColumnName: props.config.childDataConfig.newName,
+            secondId: updatedChildRecord.id,
+          }),
+        );
+      }
+
+      const updatedGrandChildRecord = await trx
+        .table(props.grandChildData.tableName)
+        .select('*')
+        .where(props.referenceNameRelationGrandChildId, updatedChildRecord.id)
+        .returning('*');
 
       if (props.config.hasRename) {
         this.renameProperties(updatedBaseRecord, props.config.baseDataConfig);
@@ -259,6 +301,22 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
         );
       }
 
+      const revision = await this.insertAndReturn({
+        trx,
+        data: {
+          user: 'Fulano',
+        },
+        tableName: 'revision_history',
+      });
+
+      updatedGrandChildRecord.forEach(async (data) => {
+        await this.insertHistory(
+          trx,
+          { ...data, revision_history_id: revision.id },
+          props.grandChildData.tableNameHistory,
+        );
+      });
+
       const innerUpdatedRecords = {
         ...updatedBaseRecord,
         ...updatedChildRecord,
@@ -266,14 +324,8 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
 
       await this.insertHistory(
         trx,
-        innerUpdatedRecords,
+        { ...innerUpdatedRecords, revision_history_id: revision.id },
         props.childData.tableNameHistory,
-      );
-
-      await this.insertHistory(
-        trx,
-        updatedGrandChildRecord,
-        props.grandChildData.tableNameHistory,
       );
 
       return { ...innerUpdatedRecords, ...updatedGrandChildRecord };

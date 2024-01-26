@@ -33,12 +33,10 @@ export class CollectionSelectItemRepository {
 
   public async update(
     idCollection: string,
-    idItem: string,
     data: CollectionSelectItemUpdateRequestDto,
   ) {
     const { baseData, grandChildData } = this.converter.convertUpdateRequest(
       idCollection,
-      idItem,
       data,
     );
 
@@ -60,7 +58,7 @@ export class CollectionSelectItemRepository {
     childData?: {};
     grandChildData:
       | CollectionSelectOption[]
-      | CollectionSelectOptionUpdateRequestDto;
+      | CollectionSelectOptionUpdateRequestDto[];
   }) {
     return {
       baseData: {
