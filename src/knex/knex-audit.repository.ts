@@ -22,14 +22,23 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
     });
   }
 
-  public async createSimpleAudit(data: T): Promise<T> {
-    return await this.transaction(async (trx) => {
-      const createdRecord = this.validateEntity(
-        await this.insertAndReturn({ trx, data }),
-      );
-      await this.insertHistory(trx, createdRecord);
-      return createdRecord;
-    });
+  public async createSimpleAudit({
+    data,
+    tableName,
+    tableNameHistory,
+  }: {
+    data: T;
+    tableName: string;
+    tableNameHistory: string;
+  }): Promise<T> {
+    return this.performAuditOperation(
+      data,
+      tableName,
+      tableNameHistory,
+      async (trx, record) => {
+        await this.insertHistory(trx, record, tableNameHistory);
+      },
+    );
   }
 
   public async createInheritanceAudit(
@@ -67,7 +76,76 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
         ...createdSecondRecord,
       };
 
-      await this.insertHistory(trx, innerCreatedRecords);
+      await this.insertHistory(
+        trx,
+        innerCreatedRecords,
+        props.tableNameHistory,
+      );
+
+      return innerCreatedRecords;
+    });
+  }
+
+  public async createManyInheritanceAudit(
+    props: IActionInheritanceProps,
+  ): Promise<A> {
+    return await this.transaction(async (trx) => {
+      const createdFirstRecord = this.validateEntity(
+        await this.insertAndReturn({
+          trx,
+          data: props.baseData.data,
+          tableName: props.baseData.tableName,
+        }),
+      );
+
+      props.childData.data[props.referenceNameRelationId] =
+        createdFirstRecord.id;
+      const createdSecondRecord = this.validateEntity(
+        await this.insertAndReturn({
+          trx,
+          data: props.childData.data,
+          tableName: props.childData.tableName,
+        }),
+      );
+
+      if (props.grandChildData.data instanceof Array) {
+        props.grandChildData.data.map((data) => {
+          data[props.referenceNameRelationGrandChildId] =
+            createdSecondRecord.id;
+        });
+      }
+      const createdRecord = this.validateEntity(
+        await this.insertAndReturn({
+          trx,
+          data: props.grandChildData.data,
+          tableName: props.grandChildData.tableName,
+        }),
+      );
+
+      await this.insertHistory(
+        trx,
+        createdRecord,
+        props.grandChildData.tableNameHistory,
+      );
+
+      if (props.config.hasRename) {
+        this.renameProperties(createdFirstRecord, props.config.baseDataConfig);
+        this.renameProperties(
+          createdSecondRecord,
+          props.config.childDataConfig,
+        );
+      }
+
+      const innerCreatedRecords = {
+        ...createdFirstRecord,
+        ...createdSecondRecord,
+      };
+
+      await this.insertHistory(
+        trx,
+        innerCreatedRecords,
+        props.childData.tableNameHistory,
+      );
 
       return innerCreatedRecords;
     });
@@ -123,7 +201,11 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
         ...updatedSecondRecord,
       };
 
-      await this.insertHistory(trx, innerUpdatedRecords);
+      await this.insertHistory(
+        trx,
+        innerUpdatedRecords,
+        props?.tableNameHistory,
+      );
 
       return innerUpdatedRecords;
     });
@@ -191,12 +273,31 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
     return data;
   }
 
-  private async insertHistory(trx: Knex.Transaction, record: T) {
-    await trx.table(this.tableNameHistory).insert(record);
+  private async insertHistory(
+    trx: Knex.Transaction,
+    record: T,
+    tableNameHistory?: string,
+  ) {
+    await trx.table(tableNameHistory ?? this.tableNameHistory).insert(record);
   }
 
   private renameProperties(record: any, config: DataConfig) {
     record[config.newName] = record[config.oldName];
     delete record[config.oldName];
+  }
+
+  private performAuditOperation(
+    data: T,
+    tableName: string,
+    tableNameHistory: string,
+    operation: (trx: Knex.Transaction, record: T) => Promise<void>,
+  ): Promise<T> {
+    return this.transaction(async (trx) => {
+      const createdRecord = this.validateEntity(
+        await this.insertAndReturn({ trx, data, tableName }),
+      );
+      await operation(trx, createdRecord);
+      return createdRecord;
+    });
   }
 }
