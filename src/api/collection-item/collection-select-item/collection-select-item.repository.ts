@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CollectionItemModel } from 'src/collection-text-item/collection-text-item.model';
 import { KnexAuditRepository } from 'src/knex/knex-audit.repository';
 import {
   CollectionSelectItemHistoryModel,
@@ -9,6 +8,7 @@ import {
   CollectionSelectOptionUpdateRequestDto,
 } from './collection-select-item.model';
 import { CollectionSelectItemConverter } from './collection-select-item.converter';
+import { CollectionItemModel } from '../models/collection-item.model';
 
 @Injectable()
 export class CollectionSelectItemRepository {

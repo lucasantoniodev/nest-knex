@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
-import { CollectionSelectItemModule } from './collection-select-item/collection-select-item.module';
-import { CollectionTextItemModule } from './collection-text-item/collection-text-item.module';
+import { CollectionItemModule } from './api/collection-item/collection-item.module';
 
 @Module({
-  imports: [CollectionTextItemModule, CollectionSelectItemModule],
+  imports: [CollectionItemModule],
   controllers: [],
   providers: [],
 })

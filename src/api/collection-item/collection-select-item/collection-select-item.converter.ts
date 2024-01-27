@@ -4,7 +4,7 @@ import {
   CollectionSelectItemUpdateRequestDto,
   CollectionSelectOptionUpdateRequestDto,
 } from './collection-select-item.model';
-import { CollectionItemModel } from 'src/collection-text-item/collection-text-item.model';
+import { CollectionItemModel } from '../models/collection-item.model';
 
 @Injectable()
 export class CollectionSelectItemConverter {
