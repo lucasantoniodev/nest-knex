@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { CreateTextItemModelDto } from '../models/dto/create-text-item.model';
+import { CreateTextItemModelDto } from '../models/dto/request.model';
 import { CreateCollectionTextItemService } from '../services/create-collection-text-item.service';
 
 @Controller('collection-text-item')

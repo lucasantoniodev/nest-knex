@@ -40,6 +40,7 @@ export class KnexAuditRepository<T, A> extends KnexRepository<T> {
     });
   }
 
+  //Refatorado
   public async createInheritanceAudit(
     props: IActionInheritanceProps,
   ): Promise<A> {

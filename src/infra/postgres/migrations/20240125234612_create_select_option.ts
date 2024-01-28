@@ -11,7 +11,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('description').notNullable();
     table.integer('index').notNullable();
     table.boolean('approves').notNullable();
-    table.integer('version').defaultTo(0);
+    table.integer('version').unique().defaultTo(0);
   });
 
   await knex.raw(`
@@ -36,7 +36,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('description').notNullable();
     table.integer('index').notNullable();
     table.boolean('approves').notNullable();
-    table.integer('version').defaultTo(0);
+    table.integer('version').unique().notNullable();
     table.uuid('revision_history_id').notNullable();
   });
 }

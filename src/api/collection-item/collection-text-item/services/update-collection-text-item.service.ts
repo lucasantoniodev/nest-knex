@@ -1,17 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { CollectionTextItemRequestConverter } from '../converters/collection-text-item.converter';
-import { CreateTextItemModelDto } from '../models/dto/request.model';
+import { UpdateCollectionTextItemModelDto } from '../models/dto/request.model';
 import { CollectionTextItemRepository } from '../repositories/collection-text-item.repository';
+import { hasValidData } from 'src/helper/verify-if-has-property.helper';
 
 @Injectable()
-export class CreateCollectionTextItemService {
+export class UpdateCollectionTextItemService {
   constructor(
     private readonly repository: CollectionTextItemRepository,
     private readonly converter: CollectionTextItemRequestConverter,
   ) {}
-
-  public async execute(data: CreateTextItemModelDto) {
+  public async execute(id: string, data: UpdateCollectionTextItemModelDto) {
     const { collectionItem, textItem } = this.converter.execute(data);
-    return this.repository.create(collectionItem, textItem);
+    if (!hasValidData(collectionItem) && !hasValidData(textItem)) {
+      return;
+    }
+    return this.repository.update(id, collectionItem, textItem);
   }
 }

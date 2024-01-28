@@ -1,3 +1,5 @@
+import { Knex } from 'knex';
+
 export interface AuditProps {
   tableName?: string;
   tableNameHistory: string;
@@ -28,4 +30,17 @@ export interface IFindByIdAndVersionProps {
   id: string | number;
   data: Object;
   version: number;
+}
+
+//
+export interface IActionProps<T> {
+  trx: Knex.Transaction;
+  tableName: string;
+  entity?: T;
+}
+
+export interface IActionWithContitionsProps<T> extends IActionProps<T> {
+  columnNameId?: string;
+  id: string | number;
+  conditions?: Record<string, any>;
 }

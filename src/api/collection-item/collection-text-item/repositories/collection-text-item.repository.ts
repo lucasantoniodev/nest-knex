@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { KnexNewRepository } from 'src/knex/knex-new.repository';
-import { CollectionItemModel } from '../../models/collection-item.model';
 import { TextItemModel } from '../models/text-item.model';
 import { RevisionModel } from 'src/models/revision.model';
 import { TextItemHistory } from '../models/text-item-history.model';
 import { deleteProperty, renameIdProperty } from 'src/helper';
+import { CollectionItemModel } from '../../models/collection-item.model';
+import { hasValidData } from 'src/helper/verify-if-has-property.helper';
 
 @Injectable()
 export class CollectionTextItemRepository {
@@ -16,34 +17,72 @@ export class CollectionTextItemRepository {
   ) {
     return await this.knexRepository.executeTransaction(async (trx) => {
       const baseEntityCreated =
-        await this.knexRepository.create<CollectionItemModel>(
+        await this.knexRepository.create<CollectionItemModel>({
           trx,
-          'collection_item',
-          collectionItemEntity,
-        );
+          tableName: 'collection_item',
+          entity: collectionItemEntity,
+        });
       const childEntityCreated =
-        await this.knexRepository.create<TextItemModel>(
+        await this.knexRepository.create<TextItemModel>({
           trx,
-          'text_item',
-          this.applyIdRelationAndReturnEntity(
+          tableName: 'text_item',
+          entity: this.applyIdRelationAndReturnEntity(
             baseEntityCreated.id,
             textItemEntity,
           ),
-        );
-      const revisionCreated = await this.knexRepository.create<RevisionModel>(
+        });
+      const revisionCreated = await this.knexRepository.create<RevisionModel>({
         trx,
-        'revision_history',
-        { user: 'Administrador' },
-      );
-      return await this.knexRepository.create<TextItemHistory>(
+        tableName: 'revision_history',
+        entity: { user: 'Administrador' },
+      });
+      return await this.knexRepository.create<TextItemHistory>({
         trx,
-        'text_item_history',
-        this.generateHistoryEntity(
+        tableName: 'text_item_history',
+        entity: this.generateHistoryEntity(
           baseEntityCreated,
           childEntityCreated,
           revisionCreated,
         ),
-      );
+      });
+    });
+  }
+
+  public async update(
+    id: string | number,
+    collectionItemEntity: CollectionItemModel,
+    textItemEntity: TextItemModel,
+  ) {
+    return this.knexRepository.executeTransaction(async (trx) => {
+      const baseEntityUpdated =
+        await this.knexRepository.update<CollectionItemModel>({
+          trx,
+          tableName: 'collection_item',
+          entity: collectionItemEntity,
+          id,
+        });
+      const childEntityUpdated =
+        await this.knexRepository.update<TextItemModel>({
+          trx,
+          tableName: 'text_item',
+          columnNameId: 'collection_item_id',
+          entity: textItemEntity,
+          id,
+        });
+      const revisionCreated = await this.knexRepository.create<RevisionModel>({
+        trx,
+        tableName: 'revision_history',
+        entity: { user: 'Administrador' },
+      });
+      return await this.knexRepository.create<TextItemHistory>({
+        trx,
+        tableName: 'text_item_history',
+        entity: this.generateHistoryEntity(
+          baseEntityUpdated,
+          childEntityUpdated,
+          revisionCreated,
+        ),
+      });
     });
   }
 
