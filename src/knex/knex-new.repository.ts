@@ -41,8 +41,8 @@ export class KnexNewRepository implements OnModuleDestroy {
     tableName,
     entity,
   }: IActionProps<T>): Promise<T> {
-    const [records] = await trx.table(tableName).insert(entity).returning('*');
-    return records;
+    const records = await trx.table(tableName).insert(entity).returning('*');
+    return Array.isArray(entity) ? (records as T) : (records[0] as T);
   }
 
   public async findAll<T>({ trx, tableName }: IActionProps<T>): Promise<T> {

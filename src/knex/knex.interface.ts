@@ -1,38 +1,5 @@
-import { Knex } from 'knex';
+import { Knex } from "knex";
 
-export interface AuditProps {
-  tableName?: string;
-  tableNameHistory: string;
-  data: any;
-}
-
-export interface DataConfig {
-  oldName?: string;
-  newName?: string;
-}
-
-export interface IActionInheritanceProps {
-  baseData: AuditProps;
-  childData: AuditProps;
-  grandChildData?: AuditProps;
-  referenceNameRelationId: string;
-  referenceNameRelationGrandChildId?: string;
-  config: {
-    hasRename: boolean;
-    baseDataConfig: DataConfig;
-    childDataConfig: DataConfig;
-    grandChildDataConfig?: DataConfig;
-  };
-}
-
-export interface IFindByIdAndVersionProps {
-  columnName?: string;
-  id: string | number;
-  data: Object;
-  version: number;
-}
-
-//
 export interface IActionProps<T> {
   trx?: Knex.Transaction;
   tableName: string;

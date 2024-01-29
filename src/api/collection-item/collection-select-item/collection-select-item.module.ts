@@ -1,12 +1,17 @@
 import { Module } from '@nestjs/common';
 import { KnexAppModule } from 'src/knex/knex.module';
-import { CollectionSelectItemRepository } from './collection-select-item.repository';
-import { CollectionSelectItemController } from './collection-select-item.controller';
-import { CollectionSelectItemConverter } from './collection-select-item.converter';
+import { CollectionSelectItemRepository } from './repositories/collection-select-item.repository';
+import { CreateCollectionSelectItemController } from './controllers/createCollectionSelectItem.controller';
+import { CreateCollectionSelectItemService } from './services/createCollectionSelectItem.service';
+import { CollectionSelectItemRequestConverter } from './converters/request.converter';
 
 @Module({
   imports: [KnexAppModule],
-  controllers: [CollectionSelectItemController],
-  providers: [CollectionSelectItemRepository, CollectionSelectItemConverter],
+  controllers: [CreateCollectionSelectItemController],
+  providers: [
+    CollectionSelectItemRepository,
+    CollectionSelectItemRequestConverter,
+    CreateCollectionSelectItemService,
+  ],
 })
 export class CollectionSelectItemModule {}

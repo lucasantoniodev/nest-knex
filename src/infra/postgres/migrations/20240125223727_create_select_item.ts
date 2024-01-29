@@ -22,7 +22,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string('description').notNullable();
     table.string('filePath');
     table.timestamp('expiry_date').notNullable();
-    table.integer('version').unique().notNullable();
+    table.integer('version').notNullable();
     table.uuid('revision_history_id').notNullable();
     table.timestamp('created_at');
     table.timestamp('updated_at');

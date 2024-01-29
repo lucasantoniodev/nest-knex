@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { KnexModule } from 'nestjs-knex';
-import { KnexAuditRepository } from './knex-audit.repository';
 import { KnexRepository } from './knex.repository';
 import { KnexNewRepository } from './knex-new.repository';
 
@@ -27,7 +26,7 @@ import { KnexNewRepository } from './knex-new.repository';
       }),
     }),
   ],
-  providers: [KnexRepository, KnexAuditRepository, KnexNewRepository],
-  exports: [KnexRepository, KnexAuditRepository, KnexNewRepository],
+  providers: [KnexRepository, KnexNewRepository],
+  exports: [KnexRepository, KnexNewRepository],
 })
 export class KnexAppModule {}
