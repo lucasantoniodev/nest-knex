@@ -19,6 +19,7 @@ export class CollectionTextItemRequestConverter {
       description: data?.description,
       expiry_date: data?.expiry_date,
       filePath: data?.filePath,
+      updated_at: new Date(),
     };
     const textItem: TextItemModel = {
       min_length: data?.min_length,

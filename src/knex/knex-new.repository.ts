@@ -45,31 +45,33 @@ export class KnexNewRepository implements OnModuleDestroy {
     return records;
   }
 
+  public async findAll<T>({ trx, tableName }: IActionProps<T>): Promise<T> {
+    return (await trx.table(tableName).select('*').returning('*')) as T;
+  }
+
   public async findById<T>({
-    trx,
     tableName,
-    columnNameId,
+    columnNameId = 'id',
     id,
     conditions = {},
-  }: IActionWithContitionsProps<T>) {
-    return trx
+  }: IActionWithContitionsProps<T>): Promise<T> {
+    return this.client
       .table(tableName)
       .select('*')
-      .where(columnNameId ?? 'id', id)
+      .where(columnNameId, id)
       .where(conditions)
       .first();
   }
 
   public async findByIdWithJoin<T>({
-    trx,
     tableName,
     columnNameId = 'id',
     id,
     conditions = {},
     joinTableName = '',
     joinColumnName = 'id',
-  }: IActionWithContitionsJoinableProps<T>) {
-    return await trx
+  }: IActionWithContitionsJoinableProps<T>): Promise<T> {
+    const [records] = await this.client
       .table(tableName)
       .select(`${tableName}.*`, `${joinTableName}.*`)
       .leftJoin(
@@ -80,13 +82,14 @@ export class KnexNewRepository implements OnModuleDestroy {
       )
       .where(`${tableName}.${columnNameId}`, id)
       .where(conditions)
-      .first();
+      .returning('*');
+    return records;
   }
 
   public async update<T>({
     trx,
     tableName,
-    columnNameId,
+    columnNameId = 'id',
     id,
     entity,
     conditions = {},
@@ -95,7 +98,7 @@ export class KnexNewRepository implements OnModuleDestroy {
       return await this.findById<T>({
         trx,
         tableName,
-        columnNameId: columnNameId ?? 'id',
+        columnNameId,
         id,
       });
     }
@@ -103,7 +106,49 @@ export class KnexNewRepository implements OnModuleDestroy {
     const [records] = await trx
       .table(tableName)
       .update(entity)
-      .where(columnNameId ?? 'id', id)
+      .where(columnNameId, id)
+      .where(conditions)
+      .returning('*');
+    return records;
+  }
+
+  public async delete<T>({
+    trx,
+    tableName,
+    columnNameId = 'id',
+    id,
+    conditions = {},
+  }: IActionWithContitionsProps<T>): Promise<T> {
+    const [records] = await trx
+      .table(tableName)
+      .delete()
+      .where(columnNameId, id)
+      .where(conditions)
+      .returning('*');
+    return records;
+  }
+
+  public async deleteAuditable<T>({
+    trx,
+    tableName,
+    columnNameId = 'id',
+    id,
+    conditions = {},
+  }: IActionWithContitionsProps<T>): Promise<T> {
+    await this.update({
+      trx,
+      tableName,
+      columnNameId,
+      id,
+      entity: {
+        deleted_at: trx.fn.now(),
+        version: trx.raw('"version" + 1'),
+      },
+    });
+    const [records] = await trx
+      .table(tableName)
+      .delete()
+      .where(columnNameId, id)
       .where(conditions)
       .returning('*');
     return records;

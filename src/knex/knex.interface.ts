@@ -34,7 +34,7 @@ export interface IFindByIdAndVersionProps {
 
 //
 export interface IActionProps<T> {
-  trx: Knex.Transaction;
+  trx?: Knex.Transaction;
   tableName: string;
   entity?: T;
 }

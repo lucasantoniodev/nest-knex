@@ -24,8 +24,9 @@ export async function up(knex: Knex): Promise<void> {
     RETURN NEW;
   END;
   $$ LANGUAGE plpgsql;
-
-  CREATE TRIGGER collection_item_increment_version
+  
+  -- Trigger para UPDATE
+  CREATE TRIGGER collection_item_increment_version_update
   BEFORE UPDATE ON collection_item
   FOR EACH ROW
   EXECUTE FUNCTION increment_version();
@@ -35,7 +36,7 @@ export async function up(knex: Knex): Promise<void> {
 export async function down(knex: Knex): Promise<void> {
   await knex.schema.dropTable('collection_item');
   await knex.raw(`
-  DROP TRIGGER IF EXISTS books_increment_version ON books;
+  DROP TRIGGER IF EXISTS collection_item_increment_version_update ON collection_item;
   DROP FUNCTION IF EXISTS increment_version();
 `);
 }

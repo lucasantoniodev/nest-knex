@@ -22,11 +22,12 @@ export async function up(knex: Knex): Promise<void> {
     RETURN NEW;
   END;
   $$ LANGUAGE plpgsql;
-
-  CREATE TRIGGER select_option_increment_version
+  
+  -- Trigger para UPDATE
+  CREATE TRIGGER select_option_increment_version_update
   BEFORE UPDATE ON select_option
   FOR EACH ROW
-  EXECUTE FUNCTION increment_version();
+  EXECUTE FUNCTION increment_version();  
 `);
 
   await knex.schema.createTable('select_option_history', (table) => {
@@ -44,7 +45,7 @@ export async function up(knex: Knex): Promise<void> {
 export async function down(knex: Knex): Promise<void> {
   await knex.schema.dropTable('select_option');
   await knex.raw(`
-  DROP TRIGGER IF EXISTS select_option_increment_version ON select_option;
+  DROP TRIGGER IF EXISTS select_option_increment_version_update ON select_option;
   DROP FUNCTION IF EXISTS increment_version();
 `);
   await knex.schema.dropTable('select_option_history');

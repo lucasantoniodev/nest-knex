@@ -49,14 +49,11 @@ export class CollectionTextItemRepository {
   }
 
   public async findById(id: string) {
-    return await this.knexRepository.executeTransaction(async (trx) => {
-      return await this.knexRepository.findByIdWithJoin({
-        trx,
-        tableName: 'collection_item',
-        joinTableName: 'text_item',
-        joinColumnName: 'collection_item_id',
-        id,
-      });
+    return await this.knexRepository.findByIdWithJoin({
+      tableName: 'collection_item',
+      joinTableName: 'text_item',
+      joinColumnName: 'collection_item_id',
+      id,
     });
   }
 
@@ -92,6 +89,38 @@ export class CollectionTextItemRepository {
         entity: this.generateHistoryEntity(
           baseEntityUpdated,
           childEntityUpdated,
+          revisionCreated,
+        ),
+      });
+    });
+  }
+
+  public async delete(id: string) {
+    return this.knexRepository.executeTransaction(async (trx) => {
+      const childEntityDeleted =
+        await this.knexRepository.delete<TextItemModel>({
+          trx,
+          tableName: 'text_item',
+          columnNameId: 'collection_item_id',
+          id,
+        });
+      const baseEntityDeleted =
+        await this.knexRepository.delete<CollectionItemModel>({
+          trx,
+          tableName: 'collection_item',
+          id,
+        });
+      const revisionCreated = await this.knexRepository.create<RevisionModel>({
+        trx,
+        tableName: 'revision_history',
+        entity: { user: 'Administrador' },
+      });
+      return await this.knexRepository.create<TextItemHistory>({
+        trx,
+        tableName: 'text_item_history',
+        entity: this.generateHistoryEntity(
+          baseEntityDeleted,
+          childEntityDeleted,
           revisionCreated,
         ),
       });
