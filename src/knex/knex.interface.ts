@@ -44,3 +44,9 @@ export interface IActionWithContitionsProps<T> extends IActionProps<T> {
   id: string | number;
   conditions?: Record<string, any>;
 }
+
+export interface IActionWithContitionsJoinableProps<T>
+  extends IActionWithContitionsProps<T> {
+  joinTableName: string;
+  joinColumnName: string;
+}

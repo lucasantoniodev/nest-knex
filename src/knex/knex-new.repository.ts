@@ -1,7 +1,11 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Knex } from 'knex';
 import { InjectKnex } from 'nestjs-knex';
-import { IActionProps, IActionWithContitionsProps } from './knex.interface';
+import {
+  IActionProps,
+  IActionWithContitionsJoinableProps,
+  IActionWithContitionsProps,
+} from './knex.interface';
 
 @Injectable()
 export class KnexNewRepository implements OnModuleDestroy {
@@ -48,12 +52,35 @@ export class KnexNewRepository implements OnModuleDestroy {
     id,
     conditions = {},
   }: IActionWithContitionsProps<T>) {
-    const [records] = await trx
+    return trx
       .table(tableName)
       .select('*')
       .where(columnNameId ?? 'id', id)
-      .where(conditions);
-    return records;
+      .where(conditions)
+      .first();
+  }
+
+  public async findByIdWithJoin<T>({
+    trx,
+    tableName,
+    columnNameId = 'id',
+    id,
+    conditions = {},
+    joinTableName = '',
+    joinColumnName = 'id',
+  }: IActionWithContitionsJoinableProps<T>) {
+    return await trx
+      .table(tableName)
+      .select(`${tableName}.*`, `${joinTableName}.*`)
+      .leftJoin(
+        joinTableName,
+        `${tableName}.${columnNameId}`,
+        '=',
+        `${joinTableName}.${joinColumnName}`,
+      )
+      .where(`${tableName}.${columnNameId}`, id)
+      .where(conditions)
+      .first();
   }
 
   public async update<T>({

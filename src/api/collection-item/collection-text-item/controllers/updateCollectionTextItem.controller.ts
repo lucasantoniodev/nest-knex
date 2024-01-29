@@ -1,6 +1,6 @@
-import { Body, Controller, Param, Put } from '@nestjs/common';
-import { UpdateCollectionTextItemService } from '../services/update-collection-text-item.service';
-import { UpdateCollectionTextItemModelDto } from '../models/dto/request.model';
+import { Body, Controller, Param, Put } from "@nestjs/common";
+import { UpdateCollectionTextItemService } from "../services/updateCollectionTextItem.service";
+import { UpdateCollectionTextItemModelDto } from "../models/dto/request.model";
 
 @Controller('collection-text-item')
 export class UpdateCollectionTextItemController {

@@ -48,6 +48,18 @@ export class CollectionTextItemRepository {
     });
   }
 
+  public async findById(id: string) {
+    return await this.knexRepository.executeTransaction(async (trx) => {
+      return await this.knexRepository.findByIdWithJoin({
+        trx,
+        tableName: 'collection_item',
+        joinTableName: 'text_item',
+        joinColumnName: 'collection_item_id',
+        id,
+      });
+    });
+  }
+
   public async update(
     id: string | number,
     collectionItemEntity: CollectionItemModel,
