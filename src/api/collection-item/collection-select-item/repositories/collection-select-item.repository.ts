@@ -89,6 +89,7 @@ export class CollectionSelectItemRepository {
       version: collectionItemCreated.version,
       created_at: collectionItemCreated.created_at,
       updated_at: collectionItemCreated.updated_at,
+      deleted_at: collectionItemCreated.deleted_at,
       revision_history_id: revisionCreated.id,
     };
   }

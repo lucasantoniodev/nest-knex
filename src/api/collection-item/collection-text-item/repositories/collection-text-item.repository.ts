@@ -132,15 +132,29 @@ export class CollectionTextItemRepository {
   }
 
   private generateHistoryEntity(
-    baseEntityCreated: CollectionItemModel,
-    childEntityCreated: TextItemModel,
-    revisionCreated: RevisionModel,
+    collectionItem: CollectionItemModel,
+    textItem: TextItemModel,
+    revision: RevisionModel,
   ): TextItemHistory {
-    renameIdProperty(baseEntityCreated, 'collection_item_id');
-    renameIdProperty(childEntityCreated, 'text_item_id');
-    renameIdProperty(revisionCreated, 'revision_history_id');
-    deleteProperty(revisionCreated, 'user');
-    return { ...baseEntityCreated, ...childEntityCreated, ...revisionCreated };
+    return {
+      text_item_id: textItem.id,
+      collection_item_id: collectionItem.id,
+      min_length: textItem.min_length,
+      max_length: textItem.max_length,
+      validate_min_length: textItem.validate_min_length,
+      type: collectionItem.type,
+      code: collectionItem.code,
+      workcenter_id: collectionItem.workcenter_id,
+      title: collectionItem.title,
+      description: collectionItem.description,
+      filePath: collectionItem.filePath,
+      expiry_date: collectionItem.expiry_date,
+      version: collectionItem.version,
+      created_at: collectionItem.created_at,
+      updated_at: collectionItem.updated_at,
+      deleted_at: collectionItem.deleted_at,
+      revision_history_id: revision.id,
+    };
   }
 
   private applyIdRelationAndReturnEntity(
