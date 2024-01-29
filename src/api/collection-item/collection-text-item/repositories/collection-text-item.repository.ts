@@ -104,9 +104,14 @@ export class CollectionTextItemRepository {
           id,
         });
       const baseEntityDeleted =
-        await this.knexRepository.deleteAuditable<CollectionItemModel>({
+        await this.knexRepository.delete<CollectionItemModel>({
           trx,
           tableName: 'collection_item',
+          entity: {
+            updated_at: trx.fn.now(),
+            deleted_at: trx.fn.now(),
+            version: trx.raw('"version" + 1'),
+          } as any,
           id,
         });
       const revisionCreated = await this.knexRepository.create<RevisionModel>({

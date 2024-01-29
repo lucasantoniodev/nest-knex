@@ -37,7 +37,8 @@ export async function up(knex: Knex): Promise<void> {
     table.string('description').notNullable();
     table.integer('index').notNullable();
     table.boolean('approves').notNullable();
-    table.integer('version').unique().notNullable();
+    table.integer('version').notNullable();
+    table.unique(['select_option_id', 'version']);
     table.uuid('revision_history_id').notNullable();
   });
 }

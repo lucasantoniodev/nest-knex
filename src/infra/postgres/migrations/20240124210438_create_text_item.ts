@@ -28,7 +28,8 @@ export async function up(knex: Knex): Promise<void> {
     table.integer('min_length');
     table.integer('max_length').notNullable();
     table.boolean('validate_min_length').notNullable();
-    table.integer('version').unique().notNullable();
+    table.integer('version').notNullable();
+    table.unique(['collection_item_id', 'version']);
     table.timestamp('created_at');
     table.timestamp('updated_at');
     table.timestamp('deleted_at');

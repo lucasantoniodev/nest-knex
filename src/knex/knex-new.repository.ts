@@ -117,35 +117,19 @@ export class KnexNewRepository implements OnModuleDestroy {
     tableName,
     columnNameId = 'id',
     id,
+    entity,
     conditions = {},
   }: IActionWithContitionsProps<T>): Promise<T> {
-    const [records] = await trx
-      .table(tableName)
-      .delete()
-      .where(columnNameId, id)
-      .where(conditions)
-      .returning('*');
-    return records;
-  }
+    if (entity) {
+      await this.update({
+        trx,
+        tableName,
+        columnNameId,
+        id,
+        entity,
+      });
+    }
 
-  public async deleteAuditable<T>({
-    trx,
-    tableName,
-    columnNameId = 'id',
-    id,
-    conditions = {},
-  }: IActionWithContitionsProps<T>): Promise<T> {
-    await this.update({
-      trx,
-      tableName,
-      columnNameId,
-      id,
-      entity: {
-        updated_at: trx.fn.now(),
-        deleted_at: trx.fn.now(),
-        version: trx.raw('"version" + 1'),
-      },
-    });
     const [records] = await trx
       .table(tableName)
       .delete()
