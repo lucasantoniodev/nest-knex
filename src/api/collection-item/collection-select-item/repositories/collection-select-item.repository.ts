@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { deleteProperty, renameIdProperty } from 'src/helper';
-import { KnexNewRepository } from 'src/knex/knex-new.repository';
+import { KnexAppRepository } from 'src/knex/knex.repository';
 import { RevisionModel } from 'src/models/revision.model';
 import { CollectionItemModel } from '../../models/collection-item.model';
 import {
@@ -12,7 +12,7 @@ import {
 
 @Injectable()
 export class CollectionSelectItemRepository {
-  constructor(private readonly knexRepository: KnexNewRepository) {}
+  constructor(private readonly knexRepository: KnexAppRepository) {}
 
   public async create(
     collectionItemEntity: CollectionItemModel,
@@ -41,33 +41,43 @@ export class CollectionSelectItemRepository {
           selectOptions,
         ),
       });
-      const revisionCreated = await this.knexRepository.create<RevisionModel>({
-        trx,
-        tableName: 'revision_history',
-        entity: { user: 'Administrador' },
-      });
+      return {
+        ...collectionItemCreated,
+        select_item_id: selectItemCreated.id,
+        options: selectOptionsCreated,
+      };
+    });
+  }
 
-      await this.knexRepository.create<SelectOptionHistoryModel[]>({
-        trx,
-        tableName: 'select_option_history',
-        entity: selectOptionsCreated.map((option) =>
-          this.generateSelectOptionsHistoryEntity(
-            selectItemCreated,
-            option,
-            revisionCreated,
-          ),
-        ),
-      });
+  public async update(
+    id: string,
+    collectionItemEntity: CollectionItemModel,
+    selectOptions: SelectOptionModel[],
+  ) {
+    return this.knexRepository.executeTransaction(async (trx) => {
+      const collectionItemUpdated =
+        await this.knexRepository.update<CollectionItemModel>({
+          trx,
+          tableName: 'collection_item',
+          id,
+          entity: collectionItemEntity,
+        });
 
-      return await this.knexRepository.create<SelectItemModelHistoryModel>({
-        trx,
-        tableName: 'select_item_history',
-        entity: this.generateSelectItemHistoryEntity(
-          collectionItemCreated,
-          selectItemCreated,
-          revisionCreated,
-        ),
-      });
+      const selectOptionsUpdated: SelectOptionModel[] = await Promise.all(
+        selectOptions.map(async (option) => {
+          return await this.knexRepository.update<SelectOptionModel>({
+            trx,
+            tableName: 'select_option',
+            id: option.id,
+            entity: option,
+          });
+        }),
+      );
+
+      return {
+        ...collectionItemUpdated,
+        options: selectOptionsUpdated,
+      };
     });
   }
 
