@@ -141,6 +141,7 @@ export class KnexNewRepository implements OnModuleDestroy {
       columnNameId,
       id,
       entity: {
+        updated_at: trx.fn.now(),
         deleted_at: trx.fn.now(),
         version: trx.raw('"version" + 1'),
       },

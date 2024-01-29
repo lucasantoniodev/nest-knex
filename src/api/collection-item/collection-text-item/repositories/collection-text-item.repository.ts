@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { KnexNewRepository } from 'src/knex/knex-new.repository';
-import { TextItemModel } from '../models/text-item.model';
-import { RevisionModel } from 'src/models/revision.model';
-import { TextItemHistory } from '../models/text-item-history.model';
 import { deleteProperty, renameIdProperty } from 'src/helper';
+import { KnexNewRepository } from 'src/knex/knex-new.repository';
+import { RevisionModel } from 'src/models/revision.model';
 import { CollectionItemModel } from '../../models/collection-item.model';
-import { hasValidData } from 'src/helper/verify-if-has-property.helper';
+import { TextItemHistory } from '../models/text-item-history.model';
+import { TextItemModel } from '../models/text-item.model';
 
 @Injectable()
 export class CollectionTextItemRepository {
@@ -105,7 +104,7 @@ export class CollectionTextItemRepository {
           id,
         });
       const baseEntityDeleted =
-        await this.knexRepository.delete<CollectionItemModel>({
+        await this.knexRepository.deleteAuditable<CollectionItemModel>({
           trx,
           tableName: 'collection_item',
           id,
