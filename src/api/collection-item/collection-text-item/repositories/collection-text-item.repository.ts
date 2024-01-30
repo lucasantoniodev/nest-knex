@@ -11,7 +11,7 @@ export class CollectionTextItemRepository {
     collectionItemEntity: CollectionItemModel,
     textItemEntity: TextItemModel,
   ) {
-    return await this.knexRepository.executeTransaction(async (trx) => {
+    return this.knexRepository.executeTransaction(async (trx) => {
       const baseEntityCreated =
         await this.knexRepository.create<CollectionItemModel>({
           trx,
@@ -37,7 +37,7 @@ export class CollectionTextItemRepository {
   }
 
   public async findById(id: string) {
-    return await this.knexRepository.findByIdWithJoin({
+    return this.knexRepository.findByIdWithJoin({
       tableName: 'collection_item',
       joinTableName: 'text_item',
       joinColumnName: 'collection_item_id',

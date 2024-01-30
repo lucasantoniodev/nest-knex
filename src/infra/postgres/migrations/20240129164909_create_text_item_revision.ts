@@ -5,10 +5,10 @@ export async function up(knex: Knex): Promise<void> {
     table.uuid('id').primary().defaultTo(knex.raw('uuid_generate_v4()'));
     table.integer('type').notNullable();
     table.integer('code').notNullable();
-    table.integer('workcenter_id').notNullable();
+    table.uuid('organizational_resource_plant_id').notNullable();
     table.string('title').notNullable();
     table.string('description').notNullable();
-    table.string('filePath');
+    table.string('file_path');
     table.date('expiry_date').notNullable();
     table.integer('min_length');
     table.integer('max_length').notNullable();
@@ -18,12 +18,8 @@ export async function up(knex: Knex): Promise<void> {
       .references('id')
       .inTable('collection_item')
       .notNullable();
-    table
-      .uuid('collection_form_revision_id')
-      .references('id')
-      .inTable('collection_form_revision')
-      .unique()
-      .notNullable();
+    table.integer('version').notNullable();
+    table.unique(['collection_item_id', 'version']);
     table.timestamp('created_at');
     table.timestamp('updated_at');
   });

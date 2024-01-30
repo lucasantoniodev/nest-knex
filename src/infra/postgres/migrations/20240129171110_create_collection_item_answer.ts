@@ -8,11 +8,7 @@ export async function up(knex: Knex): Promise<void> {
       .references('id')
       .inTable('collection_form_answer')
       .notNullable();
-    table
-      .uuid('collection_item_revision_id')
-      .references('id')
-      .inTable('collection_form_revision')
-      .notNullable();
+    table.uuid('collection_item_revision_id').notNullable();
     table.string('answer').notNullable();
   });
 }

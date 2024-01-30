@@ -12,4 +12,6 @@ export interface CollectionTextItemRevision {
   validate_min_length: boolean;
   collection_item_id: string;
   collection_form_revision_id: string;
+  created_at: Date;
+  updated_at: Date;
 }

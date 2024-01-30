@@ -8,6 +8,7 @@ export class CreateCollectionTextItemController {
 
   @Post()
   public execute(@Body() data: CreateTextItemModelDto) {
+    // Converter -> Model 
     return this.service.execute(data);
   }
 }
