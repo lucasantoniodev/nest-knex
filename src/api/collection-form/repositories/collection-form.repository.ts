@@ -23,7 +23,7 @@ export class CollectionFormRepository {
           entity: collectionForm,
         });
 
-      const itemsFormCreated = await this.knexRepository.create<ItemForm[]>({
+      const itemsCreated = await this.knexRepository.create<ItemForm[]>({
         trx,
         tableName: 'item_form',
         entity: itemsForm.map((item) => {
@@ -36,78 +36,22 @@ export class CollectionFormRepository {
         await this.knexRepository.create<CollectionFormRevisionModel>({
           trx,
           tableName: 'collection_form_revision',
-          entity: this.generateCollectionFormRevision(collectionFormCreated, 0),
+          entity: this.generateCollectionFormRevision(collectionFormCreated),
         });
 
-      await Promise.all(
-        itemsForm.map(async (item) => {
-          switch (item.type) {
-            case 1:
-              return this.generateCollectionTextItemRevision(
-                trx,
-                item,
-                collectionFormRevision,
-              );
-          }
-        }),
-      );
-
-      return collectionFormRevision;
-    });
-  }
-
-  public async update(
-    id: string,
-    collectionForm: CollectionFormModel,
-    itemsForm: ItemForm[],
-  ) {
-    return this.knexRepository.executeTransaction(async (trx) => {});
-  }
-
-  private async generateCollectionTextItemRevision(
-    trx: Knex.Transaction,
-    item: ItemForm,
-    collectionFormRevision: CollectionFormRevisionModel,
-  ) {
-    const collectionItem = await this.knexRepository.findByIdWithJoin<
-      CollectionItemModel & TextItemModel
-    >({
-      tableName: 'collection_item',
-      joinTableName: 'text_item',
-      joinColumnName: 'collection_item_id',
-      id: item.collection_item_id,
-    });
-    return await this.knexRepository.create<CollectionTextItemRevision>({
-      trx,
-      tableName: 'text_item_revision',
-      entity: {
-        type: collectionItem.type,
-        code: collectionItem.code,
-        organizational_resource_plant_id: collectionItem.organizational_resource_plant_id,
-        title: collectionItem.title,
-        description: collectionItem.description,
-        filePath: collectionItem.file_path,
-        expiry_date: collectionItem.expiry_date,
-        max_length: collectionItem.max_length,
-        min_length: collectionItem.min_length,
-        validate_min_length: collectionItem.validate_min_length,
-        collection_item_id: item.collection_item_id,
-        collection_form_revision_id: collectionFormRevision.id,
-        created_at: collectionItem.created_at,
-        updated_at: collectionItem.updated_at,
-      },
+      return { ...collectionFormRevision, collection_items: itemsCreated };
     });
   }
 
   private generateCollectionFormRevision(
     collectionForm: CollectionFormModel,
-    version: number,
   ): CollectionFormRevisionModel {
     return {
       name: collectionForm.name,
       description: collectionForm.description,
       collection_form_id: collectionForm.id,
-      version,
+      created_at: collectionForm.created_at,
+      updated_at: collectionForm.updated_at,
     };
   }
 }

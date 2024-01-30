@@ -3,5 +3,7 @@ export interface CollectionFormRevisionModel {
   name?: string;
   description: string;
   collection_form_id: string;
-  version: number;
+  version?: number;
+  created_at: Date;
+  updated_at: Date;
 }
