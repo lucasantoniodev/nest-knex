@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { deleteProperty, renameIdProperty } from 'src/helper';
 import { KnexAppRepository } from 'src/knex/knex.repository';
-import { RevisionModel } from 'src/models/revision.model';
 import { CollectionItemModel } from '../../models/collection-item.model';
-import { TextItemHistory } from '../models/text-item-history.model';
 import { TextItemModel } from '../models/text-item.model';
 
 @Injectable()
