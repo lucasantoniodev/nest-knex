@@ -91,7 +91,8 @@ export class CollectionSelectItemRepository {
       collection_item_id: collectionItemCreated.id,
       type: collectionItemCreated.type,
       code: collectionItemCreated.code,
-      workcenter_id: collectionItemCreated.organizational_resource_plant_id,
+      organizational_resource_plant_id:
+        collectionItemCreated.organizational_resource_plant_id,
       title: collectionItemCreated.title,
       description: collectionItemCreated.description,
       filePath: collectionItemCreated.file_path,
@@ -99,7 +100,6 @@ export class CollectionSelectItemRepository {
       version: collectionItemCreated.version,
       created_at: collectionItemCreated.created_at,
       updated_at: collectionItemCreated.updated_at,
-      deleted_at: collectionItemCreated.deleted_at,
       revision_history_id: revisionCreated.id,
     };
   }

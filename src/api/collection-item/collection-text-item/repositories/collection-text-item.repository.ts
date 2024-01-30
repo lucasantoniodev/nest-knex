@@ -29,16 +29,14 @@ export class CollectionTextItemRepository {
         ),
       });
 
-      const textItemRevisionCreated =
-        await this.knexRepository.create<TextItemRevision>({
-          trx,
-          tableName: 'text_item_revision',
-        });
-
-      return {
-        ...collectionItemCreated,
-        ...textItemCreated,
-      };
+      return await this.knexRepository.create<TextItemRevision>({
+        trx,
+        tableName: 'text_item_revision',
+        entity: this.generateTextItemRevision(
+          collectionItemCreated,
+          textItemCreated,
+        ),
+      });
     });
   }
 

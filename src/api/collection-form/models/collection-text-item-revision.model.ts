@@ -2,7 +2,7 @@ export interface CollectionTextItemRevision {
   id?: string;
   type: number;
   code: number;
-  workcenter_id: number;
+  organizational_resource_plant_id: string;
   title: string;
   description: string;
   filePath: string;

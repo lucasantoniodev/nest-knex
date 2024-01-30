@@ -83,7 +83,7 @@ export class CollectionFormRepository {
       entity: {
         type: collectionItem.type,
         code: collectionItem.code,
-        workcenter_id: collectionItem.organizational_resource_plant_id,
+        organizational_resource_plant_id: collectionItem.organizational_resource_plant_id,
         title: collectionItem.title,
         description: collectionItem.description,
         filePath: collectionItem.file_path,
