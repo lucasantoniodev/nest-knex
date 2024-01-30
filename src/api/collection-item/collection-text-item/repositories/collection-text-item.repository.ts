@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { KnexAppRepository } from 'src/knex/knex.repository';
 import { CollectionItemModel } from '../../models/collection-item.model';
+import { TextItemRevision } from '../models/text-item-history.model';
 import { TextItemModel } from '../models/text-item.model';
 
 @Injectable()
@@ -12,36 +13,32 @@ export class CollectionTextItemRepository {
     textItemEntity: TextItemModel,
   ) {
     return this.knexRepository.executeTransaction(async (trx) => {
-      const baseEntityCreated =
+      const collectionItemCreated =
         await this.knexRepository.create<CollectionItemModel>({
           trx,
           tableName: 'collection_item',
           entity: collectionItemEntity,
         });
-      const childEntityCreated =
-        await this.knexRepository.create<TextItemModel>({
+
+      const textItemCreated = await this.knexRepository.create<TextItemModel>({
+        trx,
+        tableName: 'text_item',
+        entity: this.applyIdRelationAndReturnEntity(
+          collectionItemCreated.id,
+          textItemEntity,
+        ),
+      });
+
+      const textItemRevisionCreated =
+        await this.knexRepository.create<TextItemRevision>({
           trx,
-          tableName: 'text_item',
-          entity: this.applyIdRelationAndReturnEntity(
-            baseEntityCreated.id,
-            textItemEntity,
-          ),
+          tableName: 'text_item_revision',
         });
 
-      // Criar mapper para customizar o model
       return {
-        ...baseEntityCreated,
-        ...childEntityCreated,
+        ...collectionItemCreated,
+        ...textItemCreated,
       };
-    });
-  }
-
-  public async findById(id: string) {
-    return this.knexRepository.findByIdWithJoin({
-      tableName: 'collection_item',
-      joinTableName: 'text_item',
-      joinColumnName: 'collection_item_id',
-      id,
     });
   }
 
@@ -68,7 +65,6 @@ export class CollectionTextItemRepository {
           id,
         });
 
-      // Criar mapper para customizar o model
       return {
         ...baseEntityUpdated,
         ...childEntityUpdated,
@@ -76,34 +72,27 @@ export class CollectionTextItemRepository {
     });
   }
 
-  public async delete(id: string) {
-    return this.knexRepository.executeTransaction(async (trx) => {
-      const childEntityDeleted =
-        await this.knexRepository.delete<TextItemModel>({
-          trx,
-          tableName: 'text_item',
-          columnNameId: 'collection_item_id',
-          id,
-        });
-
-      const baseEntityDeleted =
-        await this.knexRepository.delete<CollectionItemModel>({
-          trx,
-          tableName: 'collection_item',
-          entity: {
-            updated_at: trx.fn.now(),
-            deleted_at: trx.fn.now(),
-            version: trx.raw('"version" + 1'),
-          } as any,
-          id,
-        });
-
-      // Criar mapper para customizar o model
-      return {
-        ...childEntityDeleted,
-        ...baseEntityDeleted,
-      };
-    });
+  private generateTextItemRevision(
+    collectionItem: CollectionItemModel,
+    textItem: TextItemModel,
+  ): TextItemRevision {
+    return {
+      type: collectionItem.type,
+      code: collectionItem.code,
+      organizational_resource_plant_id:
+        collectionItem.organizational_resource_plant_id,
+      title: collectionItem.title,
+      description: collectionItem.description,
+      file_path: collectionItem.file_path,
+      expiry_date: collectionItem.expiry_date,
+      min_length: textItem.min_length,
+      max_length: textItem.max_length,
+      validate_min_length: textItem.validate_min_length,
+      collection_item_id: textItem.collection_item_id,
+      version: collectionItem.version,
+      created_at: collectionItem.created_at,
+      updated_at: collectionItem.updated_at,
+    };
   }
 
   private applyIdRelationAndReturnEntity(

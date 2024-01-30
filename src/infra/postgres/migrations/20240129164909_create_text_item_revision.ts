@@ -3,7 +3,7 @@ import type { Knex } from 'knex';
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('text_item_revision', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('uuid_generate_v4()'));
-    table.integer('type').notNullable();
+    table.string('type').notNullable();
     table.integer('code').notNullable();
     table.uuid('organizational_resource_plant_id').notNullable();
     table.string('title').notNullable();

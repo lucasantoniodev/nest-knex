@@ -61,9 +61,7 @@ export class CollectionFormRepository {
     collectionForm: CollectionFormModel,
     itemsForm: ItemForm[],
   ) {
-    return this.knexRepository.executeTransaction(async (trx) => {
-      
-    });
+    return this.knexRepository.executeTransaction(async (trx) => {});
   }
 
   private async generateCollectionTextItemRevision(
@@ -85,10 +83,10 @@ export class CollectionFormRepository {
       entity: {
         type: collectionItem.type,
         code: collectionItem.code,
-        workcenter_id: collectionItem.workcenter_id,
+        workcenter_id: collectionItem.organizational_resource_plant_id,
         title: collectionItem.title,
         description: collectionItem.description,
-        filePath: collectionItem.filePath,
+        filePath: collectionItem.file_path,
         expiry_date: collectionItem.expiry_date,
         max_length: collectionItem.max_length,
         min_length: collectionItem.min_length,

@@ -13,7 +13,7 @@ export async function up(knex: Knex): Promise<void> {
       .references('id')
       .inTable('collection_item')
       .notNullable();
-    table.integer('type').notNullable();
+    table.string('type').notNullable();
   });
 }
 
