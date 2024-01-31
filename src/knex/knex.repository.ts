@@ -63,6 +63,20 @@ export class KnexAppRepository implements OnModuleDestroy {
       .first();
   }
 
+  public async findMany<T>({
+    tableName,
+    columnNameId = 'id',
+    id,
+    conditions = {},
+  }: IActionWithContitionsProps<T>) {
+    return this.client
+      .select('*')
+      .table(tableName)
+      .where(columnNameId, id)
+      .where(conditions)
+      .returning('*');
+  }
+
   public async findByIdWithJoin<T>({
     tableName,
     columnNameId = 'id',

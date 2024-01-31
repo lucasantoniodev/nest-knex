@@ -1,8 +1,8 @@
-import { Body, Controller, Param, Put } from "@nestjs/common";
-import { UpdateCollectionTextItemService } from "../services/updateCollectionTextItem.service";
-import { UpdateCollectionTextItemModelDto } from "../models/dto/request.model";
+import { Body, Controller, Param, Put } from '@nestjs/common';
+import { UpdateCollectionTextItemService } from '../services/updateCollectionTextItem.service';
+import { UpdateCollectionTextItemModelDto } from '../models/dto/request.model';
 
-@Controller('collection-text-item')
+@Controller('collection-item/text')
 export class UpdateCollectionTextItemController {
   constructor(private readonly service: UpdateCollectionTextItemService) {}
 

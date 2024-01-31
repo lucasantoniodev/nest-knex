@@ -9,6 +9,7 @@ export interface CollectionFormModel {
   id?: string;
   name?: string;
   description: string;
+  version?: number;
   created_at?: Date;
   updated_at?: Date;
 }

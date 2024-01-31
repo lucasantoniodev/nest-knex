@@ -3,6 +3,11 @@ import { KnexAppRepository } from 'src/knex/knex.repository';
 import { CollectionItemModel } from '../../models/collection-item.model';
 import { TextItemRevision } from '../models/text-item-history.model';
 import { TextItemModel } from '../models/text-item.model';
+import {
+  CollectionFormModel,
+  ItemForm,
+} from 'src/api/collection/collection-form/models/collection-form.model';
+import { CollectionFormRevisionModel } from 'src/api/collection/collection-form/models/collection-form-revision.model';
 
 @Injectable()
 export class CollectionTextItemRepository {
@@ -46,7 +51,7 @@ export class CollectionTextItemRepository {
     textItemEntity: TextItemModel,
   ) {
     return this.knexRepository.executeTransaction(async (trx) => {
-      const baseEntityUpdated =
+      const collectionItemUpdated =
         await this.knexRepository.update<CollectionItemModel>({
           trx,
           tableName: 'collection_item',
@@ -54,20 +59,75 @@ export class CollectionTextItemRepository {
           id,
         });
 
-      const childEntityUpdated =
-        await this.knexRepository.update<TextItemModel>({
+      const textItemUpdated = await this.knexRepository.update<TextItemModel>({
+        trx,
+        tableName: 'text_item',
+        columnNameId: 'collection_item_id',
+        entity: textItemEntity,
+        id,
+      });
+
+      const textItemRevisionCreated =
+        await this.knexRepository.create<TextItemRevision>({
           trx,
-          tableName: 'text_item',
-          columnNameId: 'collection_item_id',
-          entity: textItemEntity,
-          id,
+          tableName: 'text_item_revision',
+          entity: this.generateTextItemRevision(
+            collectionItemUpdated,
+            textItemUpdated,
+          ),
         });
 
-      return {
-        ...baseEntityUpdated,
-        ...childEntityUpdated,
-      };
+      const idItemsFormFinded = this.getDistinctCollectionFormIds(
+        await this.knexRepository.findMany<ItemForm[]>({
+          tableName: 'item_form',
+          columnNameId: 'collection_item_id',
+          id,
+        }),
+      );
+
+      await Promise.all(
+        idItemsFormFinded.map(async (idItemForm) => {
+          const collectionFormUpdated =
+            await this.knexRepository.update<CollectionFormModel>({
+              trx,
+              tableName: 'collection_form',
+              id: idItemForm,
+              entity: {
+                description: undefined,
+                updated_at: new Date(),
+              },
+            });
+          await this.knexRepository.create<CollectionFormRevisionModel>({
+            trx,
+            tableName: 'collection_form_revision',
+            entity: this.generateCollectionFormRevision(collectionFormUpdated),
+          });
+        }),
+      );
+
+      return textItemRevisionCreated;
     });
+  }
+
+  private getDistinctCollectionFormIds(itemsForm: ItemForm[]): string[] {
+    const uniqueCollectionFormIds = new Set<string>();
+    itemsForm.forEach((item) => {
+      uniqueCollectionFormIds.add(item.collection_form_id);
+    });
+    return Array.from(uniqueCollectionFormIds);
+  }
+
+  private generateCollectionFormRevision(
+    collectionForm: CollectionFormModel,
+  ): CollectionFormRevisionModel {
+    return {
+      name: collectionForm.name,
+      description: collectionForm.description,
+      collection_form_id: collectionForm.id,
+      version: collectionForm.version,
+      created_at: collectionForm.created_at,
+      updated_at: collectionForm.updated_at,
+    };
   }
 
   private generateTextItemRevision(
