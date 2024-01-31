@@ -1,4 +1,4 @@
-import { CollectionItemModel } from 'src/api/collection-item/models/collection-item.model';
+import { CollectionItemModel } from 'src/api/collection/collection-item/models/collection-item.model';
 import { TextItemModel } from '../text-item.model';
 
 export interface CreateTextItemModelDto

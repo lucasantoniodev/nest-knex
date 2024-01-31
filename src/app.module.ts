@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
-import { CollectionItemModule } from './api/collection-item/collection-item.module';
-import { CollectionFormModule } from './api/collection-form/collection-form.module';
+import { CollectionModule } from './api/collection/collection.module';
 
 @Module({
-  imports: [CollectionItemModule],
+  imports: [CollectionModule],
   controllers: [],
   providers: [],
 })

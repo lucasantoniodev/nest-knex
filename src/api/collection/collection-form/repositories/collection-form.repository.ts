@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { TextItemModel } from 'src/api/collection-item/collection-text-item/models/text-item.model';
-import { CollectionItemModel } from 'src/api/collection-item/models/collection-item.model';
 import { KnexAppRepository } from 'src/knex/knex.repository';
 import { CollectionFormRevisionModel } from '../models/collection-form-revision.model';
 import { CollectionFormModel, ItemForm } from '../models/collection-form.model';
-import { CollectionTextItemRevision } from '../models/collection-text-item-revision.model';
-import { Knex } from 'knex';
 
 @Injectable()
 export class CollectionFormRepository {
